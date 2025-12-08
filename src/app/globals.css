@@ -1,0 +1,48 @@
+/* ---------- BASE TAILWIND ---------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- KaTeX STYLES ---------- */
+@import "katex/dist/katex.min.css";
+
+/* ---------- PRINT SETTINGS ---------- */
+@media print {
+  /* Hide site-wide header/footer during print */
+  header, footer, .no-print {
+    display: none !important;
+  }
+
+  /* Printable worksheet container */
+  .print-container {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Questions should not split across pages */
+  .question-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    padding-bottom: 12px;
+  }
+
+  /* Force page break */
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Remove body margins/padding */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Page size - reduce margins for more content space */
+  @page {
+    size: Letter; /* Letter is more common in US than A4 */
+    margin: 12mm; /* Reduced from 20mm - adjust to taste */
+  }
+}
+

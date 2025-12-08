@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /auth/*
+
+# Host
+Host: https://www.stillymathpro.com
+
+# Sitemaps
+Sitemap: https://www.stillymathpro.com/sitemap.xml
