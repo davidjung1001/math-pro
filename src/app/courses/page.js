@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { Play, BookOpen, Clock, CheckCircle } from 'lucide-react'
+import { BookOpen, Sparkles } from 'lucide-react'
+import CourseCard from '@/components/courses/CourseCard'
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([])
@@ -30,7 +31,8 @@ export default function CoursesPage() {
       const { data, error } = await supabase
         .from('courses')
         .select('*')
-        .order('title', { ascending: true })
+        .order('display_order', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true })
 
       if (error) console.error('Error fetching courses:', error)
       else setCourses(data)
@@ -75,20 +77,24 @@ export default function CoursesPage() {
         console.error(error)
         toast.error('Enrollment failed.')
       } else {
-        toast.success('Enrolled successfully!')
+        toast.success('Successfully enrolled!')
         setEnrolledCourses(prev => [...prev, courseId])
       }
     } else {
+      // Paid course - redirect to Stripe checkout
+      const loadingToast = toast.loading('Preparing checkout...')
+      
       try {
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError || !currentSession?.access_token) {
           console.error('Session error:', sessionError)
+          toast.dismiss(loadingToast)
           toast.error('Please log in again')
           return
         }
-        
-        toast.loading('Redirecting to checkout...')
+
+        console.log('Creating checkout for course:', courseId)
         
         const response = await fetch('/api/stripe/create-checkout-session', {
           method: 'POST',
@@ -101,15 +107,29 @@ export default function CoursesPage() {
         
         const data = await response.json()
         
+        console.log('Checkout response:', { status: response.status, data })
+        
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to create checkout')
+          toast.dismiss(loadingToast)
+          toast.error(data.error || 'Failed to create checkout')
+          console.error('Checkout failed:', data)
+          return
         }
         
+        if (!data.url) {
+          toast.dismiss(loadingToast)
+          toast.error('No checkout URL returned')
+          console.error('No URL in response:', data)
+          return
+        }
+        
+        toast.dismiss(loadingToast)
+        toast.success('Redirecting to checkout...')
         window.location.href = data.url
       } catch (error) {
         console.error('Checkout error:', error)
-        toast.dismiss()
-        toast.error('Failed to start checkout. Please try again.')
+        toast.dismiss(loadingToast)
+        toast.error(`Error: ${error.message}`)
       }
     }
   }
@@ -129,24 +149,30 @@ export default function CoursesPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-5xl sm:text-6xl font-bold text-white mb-4 tracking-tight">
-            Our Courses
+        <div className="mb-12 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-cyan-400 text-sm font-semibold mb-6">
+            <Sparkles className="w-4 h-4" />
+            Start Learning Today
+          </div>
+          
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
+            Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Courses</span>
           </h1>
-          <p className="text-slate-400 text-xl max-w-2xl">
-            Master your skills with expert-led courses designed for success
+          
+          <p className="text-slate-400 text-xl max-w-2xl mx-auto leading-relaxed">
+            Master your skills with expert-led courses designed to help you succeed
           </p>
         </div>
 
         {/* Login prompt */}
         {!session && (
-          <div className="mb-10 p-6 bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl">
-            <p className="text-slate-300 text-center">
-              <Link href="/auth/login" className="text-cyan-400 font-semibold hover:text-cyan-300 transition underline decoration-2 underline-offset-4">
+          <div className="mb-12 p-6 bg-gradient-to-r from-slate-800/80 to-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl shadow-xl">
+            <p className="text-slate-300 text-center text-lg">
+              <Link href="/auth/login" className="text-cyan-400 font-bold hover:text-cyan-300 transition underline decoration-2 underline-offset-4">
                 Log in
               </Link>{' '}
               or{' '}
-              <Link href="/auth/signup" className="text-cyan-400 font-semibold hover:text-cyan-300 transition underline decoration-2 underline-offset-4">
+              <Link href="/auth/signup" className="text-cyan-400 font-bold hover:text-cyan-300 transition underline decoration-2 underline-offset-4">
                 sign up
               </Link>{' '}
               to enroll in courses
@@ -156,126 +182,25 @@ export default function CoursesPage() {
 
         {/* Course Grid */}
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map(course => {
-            const enrolled = enrolledCourses.includes(course.id)
-            const isFree = course.is_free
-            const price = course.price_cents ? `$${(course.price_cents / 100).toFixed(2)}` : 'Free'
-            const thumbnailUrl = course.thumbnail_url || `/course-thumbnails/default.jpg`
-
-            return (
-              <div
-                key={course.id}
-                className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/20 flex flex-col"
-              >
-                {/* Course Thumbnail */}
-                <div className="relative h-48 bg-slate-900 overflow-hidden">
-                  <img 
-                    src={thumbnailUrl} 
-                    alt={course.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {/* Overlay gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
-                  
-                  {/* Play button overlay for video courses */}
-                  {course.has_videos && (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="w-16 h-16 rounded-full bg-cyan-500/90 flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Enrolled badge */}
-                  {enrolled && (
-                    <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Enrolled
-                    </div>
-                  )}
-
-                  {/* Price badge */}
-                  <div className="absolute bottom-4 left-4">
-                    <div className="bg-slate-900/90 backdrop-blur px-4 py-2 rounded-full border border-slate-700">
-                      <span className={`text-lg font-bold ${isFree ? 'text-emerald-400' : 'text-cyan-400'}`}>
-                        {price}
-                      </span>
-                      {!isFree && <span className="text-slate-400 text-xs ml-2">one-time</span>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Course Content */}
-                <div className="p-6 flex-1 flex flex-col">
-                  <h2 className="text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors line-clamp-2">
-                    {course.title}
-                  </h2>
-                  
-                  <p className="text-slate-400 text-sm leading-relaxed line-clamp-3 mb-4 flex-1">
-                    {course.description || 'Comprehensive course content to master the subject'}
-                  </p>
-
-                  {/* Course Stats */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-4 pb-4 border-b border-slate-700">
-                    {course.lesson_count && (
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="w-4 h-4" />
-                        <span>{course.lesson_count} lessons</span>
-                      </div>
-                    )}
-                    {course.duration && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{course.duration}</span>
-                      </div>
-                    )}
-                    {course.has_videos && (
-                      <div className="flex items-center gap-1">
-                        <Play className="w-4 h-4" />
-                        <span>Video</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/courses/${course.slug}`}
-                      className="flex-1 text-center px-4 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition font-medium text-sm"
-                    >
-                      Preview
-                    </Link>
-
-                    <button
-                      onClick={() => handleEnroll(course.id, isFree, course.stripe_price_id)}
-                      disabled={!session || enrolled}
-                      className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        enrolled
-                          ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 cursor-default'
-                          : !session
-                          ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
-                          : isFree
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                          : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20'
-                      }`}
-                    >
-                      {enrolled ? 'View Course' : isFree ? 'Enroll Free' : 'Buy Now'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+          {courses.map(course => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              enrolled={enrolledCourses.includes(course.id)}
+              onEnroll={handleEnroll}
+              session={session}
+            />
+          ))}
         </div>
 
         {/* Empty state */}
         {courses.length === 0 && (
           <div className="text-center py-20">
-            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <BookOpen className="w-10 h-10 text-slate-600" />
+            <div className="w-24 h-24 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-12 h-12 text-slate-600" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No courses available yet</h3>
-            <p className="text-slate-400">Check back soon for new courses</p>
+            <h3 className="text-2xl font-bold text-white mb-3">No courses available yet</h3>
+            <p className="text-slate-400 text-lg">Check back soon for exciting new courses</p>
           </div>
         )}
       </div>
