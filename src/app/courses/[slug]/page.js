@@ -21,7 +21,7 @@ const sortCourseItems = (a, b) => {
 const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSubsections = [] }) => {
     const [open, setOpen] = useState(sectionIndex === 0)
     const hasSectionVideo = section.video_url
-    const isLocked = !isEnrolled && sectionIndex >= 1
+    const isLocked = !isEnrolled && sectionIndex >= 2
 
     return (
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300">
@@ -38,7 +38,7 @@ const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSu
                         <div className="flex items-center gap-2">
                             <h3 className="text-xl font-bold text-white">
                                 {section.title}
-                                {sectionIndex < 1 && !isEnrolled && (
+                                {sectionIndex < 2 && !isEnrolled && (
                                     <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400">
                                         Free
                                     </span>

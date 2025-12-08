@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { renderContent } from '@/lib/markdownWithMath'
 import { normalizeMathDelimiters } from '@/lib/normalizeMathDelimiters'
 import { fetchSubsectionData } from '@/lib/math/supabaseData'
+import YouTubeEmbed from '@/components/videos/YouTubeEmbed'
 
 export default function SubsectionPage() {
   const { slug: courseSlug, moduleSlug, subsectionSlug } = useParams()
@@ -69,7 +70,7 @@ export default function SubsectionPage() {
       // First, get the section (module) by slug
       const { data: sectionData, error: sectionError } = await supabase
         .from('sections')
-        .select('id, display_order')
+        .select('id')
         .eq('slug', moduleSlug)
         .single()
 
@@ -228,17 +229,13 @@ export default function SubsectionPage() {
           
           {/* Video Player (if video exists) */}
           {subsection.video_url && (
-            <div className="mb-8 bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-              <video 
-                controls 
-                className="w-full"
-                poster={subsection.video_thumbnail}
-              >
-                <source src={subsection.video_url} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
+  <div className="mb-8 border border-slate-700 shadow-2xl">
+    <YouTubeEmbed 
+      videoId={subsection.video_url} 
+      title={subsection.title} 
+    />
+  </div>
+)}
         </div>
 
         {/* Lesson Content */}
