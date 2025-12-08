@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import { fetchCourseBySlug } from '@/lib/math/supabaseData'
-import { BookOpen, ChevronDown, Clock, ArrowLeft, Play, CheckCircle, Lock, Video } from 'lucide-react'
+import { BookOpen, ChevronDown, Clock, ArrowLeft, Play, CheckCircle, Lock, Video, Zap, Target, TrendingUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // 💡 Helper function to sort sections and subsections
@@ -66,7 +66,7 @@ const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSu
             {open && section.subsections?.length > 0 && (
                 <div className="border-t border-slate-700">
                     {section.subsections
-                        .sort(sortCourseItems) // ✅ ensure ordered by display_order
+                        .sort(sortCourseItems)
                         .map((sub, idx) => {
                             const isCompleted = completedSubsections.includes(sub.id)
 
@@ -83,7 +83,6 @@ const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSu
                                     className={`flex items-center justify-between p-4 transition border-b border-slate-700/50 last:border-b-0 group ${isLocked ? 'cursor-not-allowed opacity-60' : 'hover:bg-slate-700/30'}`}
                                 >
                                     <div className="flex items-center gap-4 flex-1">
-                                        {/* Lesson number or status */}
                                         <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold transition ${isLocked
                                             ? 'bg-slate-700 text-slate-500'
                                             : isCompleted
@@ -93,12 +92,10 @@ const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSu
                                             {isCompleted ? <CheckCircle className="w-5 h-5" /> : <span>{idx + 1}</span>}
                                         </div>
 
-                                        {/* Always show Play icon */}
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLocked ? 'bg-slate-700' : 'bg-cyan-500/10'}`}>
                                             <Play className={`w-4 h-4 ${isLocked ? 'text-slate-500' : 'text-cyan-400'}`} fill="currentColor" />
                                         </div>
 
-                                        {/* Lesson title */}
                                         <div className="flex-1">
                                             <h4 className={`font-medium transition ${isLocked ? 'text-slate-500' : 'text-slate-200 group-hover:text-cyan-400'}`}>
                                                 {sub.title}
@@ -112,7 +109,6 @@ const CourseSection = ({ section, sectionIndex, baseUrl, isEnrolled, completedSu
                                         </div>
                                     </div>
 
-                                    {/* Lock icon */}
                                     {isLocked && <Lock className="w-4 h-4 text-slate-500" />}
                                 </Link>
                             )
@@ -137,15 +133,11 @@ export default function CoursePage({ params }) {
         const loadCourse = async () => {
             setLoading(true)
 
-            // Get session
             const { data: { session } } = await supabase.auth.getSession()
             setSession(session)
 
-            // Fetch course
             const matchedCourse = await fetchCourseBySlug(slug)
             if (matchedCourse) {
-
-                // ✅ Sort sections and subsections
                 const sortedSections = (matchedCourse.sections || [])
                     .sort(sortCourseItems)
                     .map(section => ({
@@ -156,7 +148,6 @@ export default function CoursePage({ params }) {
                 setCourse(matchedCourse)
                 setSections(sortedSections)
 
-                // Check if user is enrolled
                 if (session?.user?.id) {
                     const { data: enrollment } = await supabase
                         .from('user_enrollments')
@@ -182,8 +173,17 @@ export default function CoursePage({ params }) {
             return
         }
 
-        if (course.is_free || !course.price_cents) {
-            // Free enrollment
+        // Check if course is actually free
+        const isFree = course.is_free === true || course.price_cents === null || course.price_cents === 0
+
+        console.log('Enrolling in course:', {
+            courseId: course.id,
+            isFree,
+            price_cents: course.price_cents,
+            is_free: course.is_free
+        })
+
+        if (isFree) {
             const { error } = await supabase
                 .from('user_enrollments')
                 .insert({
@@ -192,15 +192,29 @@ export default function CoursePage({ params }) {
                     enrollment_type: 'free'
                 })
 
-            if (error) toast.error('Enrollment failed')
-            else {
-                toast.success('Enrolled successfully!')
+            if (error) {
+                console.error('Enrollment error:', error)
+                toast.error('Enrollment failed')
+            } else {
+                toast.success('Successfully enrolled!')
                 setEnrolled(true)
             }
         } else {
-            // Redirect to Stripe checkout
+            // Paid course - Stripe checkout
+            const loadingToast = toast.loading('Preparing checkout...')
+            
             try {
-                const { data: { session: currentSession } } = await supabase.auth.getSession()
+                const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
+                
+                if (sessionError || !currentSession?.access_token) {
+                    console.error('Session error:', sessionError)
+                    toast.dismiss(loadingToast)
+                    toast.error('Please log in again')
+                    return
+                }
+
+                console.log('Creating checkout session for course:', course.id)
+                
                 const response = await fetch('/api/stripe/create-checkout-session', {
                     method: 'POST',
                     headers: {
@@ -209,11 +223,33 @@ export default function CoursePage({ params }) {
                     },
                     body: JSON.stringify({ courseId: course.id })
                 })
+                
                 const data = await response.json()
-                if (response.ok) window.location.href = data.url
-                else toast.error('Failed to start checkout')
+                
+                console.log('Checkout response:', { status: response.status, data })
+                
+                if (!response.ok) {
+                    toast.dismiss(loadingToast)
+                    toast.error(data.error || 'Failed to create checkout')
+                    console.error('Checkout error:', data)
+                    return
+                }
+                
+                if (!data.url) {
+                    toast.dismiss(loadingToast)
+                    toast.error('No checkout URL returned')
+                    console.error('Missing URL in response:', data)
+                    return
+                }
+                
+                toast.dismiss(loadingToast)
+                toast.success('Redirecting to checkout...')
+                console.log('Redirecting to:', data.url)
+                window.location.href = data.url
             } catch (error) {
-                toast.error('Failed to start checkout')
+                console.error('Checkout exception:', error)
+                toast.dismiss(loadingToast)
+                toast.error(`Error: ${error.message}`)
             }
         }
     }
@@ -243,8 +279,17 @@ export default function CoursePage({ params }) {
     }
 
     const totalLessons = sections.reduce((acc, section) => acc + (section.subsections?.length || 0), 0)
-    const price = course.price_cents ? `${(course.price_cents / 100).toFixed(2)}` : 'Free'
-    const isFree = course.is_free || !course.price_cents
+    const isFree = course.is_free === true || course.price_cents === null || course.price_cents === 0
+    const displayPrice = course.price_cents ? `${(course.price_cents / 100).toFixed(2)}` : 'Free'
+
+    console.log('Course pricing:', {
+        id: course.id,
+        title: course.title,
+        is_free: course.is_free,
+        price_cents: course.price_cents,
+        calculated_isFree: isFree,
+        displayPrice
+    })
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -270,6 +315,31 @@ export default function CoursePage({ params }) {
                                 {course.description}
                             </p>
 
+                            {/* Value Props */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                                <div className="flex items-start gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+                                    <Zap className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <h3 className="text-white font-semibold text-sm mb-1">Quick & Focused</h3>
+                                        <p className="text-slate-400 text-xs">Straight-to-the-point videos</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+                                    <Target className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <h3 className="text-white font-semibold text-sm mb-1">Cram-Friendly</h3>
+                                        <p className="text-slate-400 text-xs">Perfect for last-minute prep</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+                                    <TrendingUp className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <h3 className="text-white font-semibold text-sm mb-1">Score Boost</h3>
+                                        <p className="text-slate-400 text-xs">Fast track to higher scores</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="flex flex-wrap gap-6 mb-8">
                                 <div className="flex items-center gap-2 text-slate-300">
                                     <BookOpen className="w-5 h-5 text-cyan-400" />
@@ -291,34 +361,38 @@ export default function CoursePage({ params }) {
                                     You're Enrolled
                                 </div>
                             ) : (
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                    <button
-                                        onClick={handleEnroll}
-                                        className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition shadow-xl shadow-cyan-500/20"
-                                    >
-                                        {course?.is_free
-                                            ? 'Enroll Free'
-                                            : course?.price_cents
-                                                ? `Buy Now - $${(course.price_cents / 100).toFixed(2)}`
-                                                : 'Enroll'}
-                                    </button>
+                                <button
+                                    onClick={handleEnroll}
+                                    className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition shadow-xl shadow-cyan-500/20"
+                                >
+                                    {isFree ? 'Enroll Free' : 'Enroll Now'}
+                                </button>
+                            )}
 
-                                    {course?.price_cents && !course?.is_free && (
-                                        <div className="text-slate-400 text-sm mt-2 sm:mt-0">
-                                            One-time payment • Lifetime access
-                                        </div>
-                                    )}
-                                </div>
+                            {!isFree && !enrolled && (
+                                <p className="text-slate-400 text-sm mt-4">
+                                    One-time payment • Lifetime access
+                                </p>
                             )}
                         </div>
 
+                        {/* Image section - course thumbnail or placeholder */}
                         <div className="hidden lg:block">
-                            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
-                                <img
-                                    src={course.thumbnail_url || '/course-thumbnails/default.jpg'}
-                                    alt={course.title}
-                                    className="w-full h-auto"
-                                />
+                            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-800/50">
+                                {course.thumbnail_url ? (
+                                    <img
+                                        src={course.thumbnail_url}
+                                        alt={course.title}
+                                        className="w-full h-auto"
+                                    />
+                                ) : (
+                                    <div className="aspect-video flex items-center justify-center">
+                                        <div className="text-center p-12">
+                                            <Play className="w-24 h-24 text-cyan-400 mx-auto mb-4" />
+                                            <p className="text-slate-400 text-lg">Video Course</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
                             </div>
                         </div>
