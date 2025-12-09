@@ -3,12 +3,16 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, ArrowLeft, Play, BookOpen, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import rehypeRaw from 'rehype-raw'
+import { Lock, ArrowLeft, Play, BookOpen, CheckCircle, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabaseClient'
 import { renderContent } from '@/lib/markdownWithMath'
 import { normalizeMathDelimiters } from '@/lib/normalizeMathDelimiters'
-import { fetchSubsectionData } from '@/lib/math/supabaseData'
+import { preprocessForKaTeX } from '@/lib/utils/lessonKatex'
 import YouTubeEmbed from '@/components/videos/YouTubeEmbed'
 
 export default function SubsectionPage() {
@@ -23,6 +27,8 @@ export default function SubsectionPage() {
   const [loading, setLoading] = useState(true)
   const [lessonContent, setLessonContent] = useState('')
   const [navigation, setNavigation] = useState({ prev: null, next: null })
+  const [worksheetLessons, setWorksheetLessons] = useState([])
+  const [lessonsOpen, setLessonsOpen] = useState(false)
 
   // --- Auth listener ---
   useEffect(() => {
@@ -51,7 +57,6 @@ export default function SubsectionPage() {
     const fetchUserData = async () => {
       if (!session?.user) return
       
-      // Get plan
       const { data: profileData } = await supabase
         .from('user_profiles')
         .select('plan')
@@ -67,10 +72,9 @@ export default function SubsectionPage() {
     const loadSubsection = async () => {
       if (!moduleSlug || !subsectionSlug) return
       
-      // First, get the section (module) by slug
       const { data: sectionData, error: sectionError } = await supabase
         .from('sections')
-        .select('id')
+        .select('id, section_title')
         .eq('slug', moduleSlug)
         .single()
 
@@ -80,7 +84,6 @@ export default function SubsectionPage() {
         return
       }
 
-      // Now get the subsection
       const { data: subsectionData, error: subsectionError } = await supabase
         .from('subsections')
         .select('id, subsection_title, lesson_content, section_id, video_url, video_thumbnail, slug')
@@ -101,13 +104,16 @@ export default function SubsectionPage() {
         section_id: subsectionData.section_id,
         video_url: subsectionData.video_url,
         video_thumbnail: subsectionData.video_thumbnail,
-        slug: subsectionData.slug
+        slug: subsectionData.slug,
+        sectionTitle: sectionData.section_title
       }
 
       setSubsection(formattedData)
       setLessonContent(formattedData.lessonContent || '')
       
-      // Fetch navigation (prev/next subsections in the same section)
+      // Fetch worksheet lessons from all_lessons table
+      await fetchWorksheetLessons(formattedData.title)
+      
       await fetchNavigation(formattedData.section_id, formattedData.id)
       
       setLoading(false)
@@ -115,10 +121,31 @@ export default function SubsectionPage() {
     loadSubsection()
   }, [moduleSlug, subsectionSlug, courseSlug, router])
 
+  // --- Fetch worksheet lessons ---
+  const fetchWorksheetLessons = async (subsectionTitle) => {
+    try {
+      // Fetch all_lessons by matching subsection_title only
+      // Since subsection_title should be unique within a course
+      const { data: lessons, error } = await supabase
+        .from('all_lessons')
+        .select('*')
+        .eq('subsection_title', subsectionTitle)
+        .order('page_number', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching worksheet lessons:', error)
+      } else {
+        console.log('Found worksheet lessons:', lessons?.length || 0)
+        setWorksheetLessons(lessons || [])
+      }
+    } catch (error) {
+      console.error('Error in fetchWorksheetLessons:', error)
+    }
+  }
+
   // --- Fetch navigation subsections ---
   const fetchNavigation = async (sectionId, currentSubsectionId) => {
     try {
-      // Get all subsections in this section (module), ordered by display_order
       const { data: allSubsections, error } = await supabase
         .from('subsections')
         .select('id, subsection_title, slug, display_order')
@@ -130,12 +157,10 @@ export default function SubsectionPage() {
         return
       }
 
-      // Find current subsection index
       const currentIndex = allSubsections.findIndex(s => s.id === currentSubsectionId)
       
       if (currentIndex === -1) return
 
-      // Get previous and next
       const prev = currentIndex > 0 ? allSubsections[currentIndex - 1] : null
       const next = currentIndex < allSubsections.length - 1 ? allSubsections[currentIndex + 1] : null
 
@@ -208,6 +233,7 @@ export default function SubsectionPage() {
 
   const isLoggedOut = session === null
   const isPremium = plan === 'premium'
+  const hasWorksheetLessons = worksheetLessons.length > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -229,30 +255,84 @@ export default function SubsectionPage() {
           
           {/* Video Player (if video exists) */}
           {subsection.video_url && (
-  <div className="mb-8 border border-slate-700 shadow-2xl">
-    <YouTubeEmbed 
-      videoId={subsection.video_url} 
-      title={subsection.title} 
-    />
-  </div>
-)}
+            <div className="mb-8 border border-slate-700 shadow-2xl">
+              <YouTubeEmbed 
+                videoId={subsection.video_url} 
+                title={subsection.title} 
+              />
+            </div>
+          )}
         </div>
 
-        {/* Lesson Content */}
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 sm:p-8 mb-8">
-          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-700">
-            <BookOpen className="w-6 h-6 text-cyan-400" />
-            <h2 className="text-2xl font-bold text-white">Lesson Content</h2>
-          </div>
-          
-          <div className="prose prose-invert prose-cyan max-w-none">
-            {markdownRaw ? (
-              <div dangerouslySetInnerHTML={rendered} />
-            ) : (
-              <p className="text-slate-400">No lesson content available.</p>
+        {/* Collapsible Step-by-Step Lessons (from all_lessons table) */}
+        {hasWorksheetLessons && (
+          <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl overflow-hidden mb-8">
+            <button
+              onClick={() => setLessonsOpen(!lessonsOpen)}
+              className="w-full flex items-center justify-between p-6 hover:bg-slate-700/30 transition"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-6 h-6 text-cyan-400" />
+                <div className="text-left">
+                  <h2 className="text-2xl font-bold text-white">Step-by-Step Lessons</h2>
+                  <p className="text-sm text-slate-400 mt-1">{worksheetLessons.length} detailed lessons</p>
+                </div>
+              </div>
+              <ChevronDown 
+                className={`w-6 h-6 text-cyan-400 transition-transform duration-300 ${lessonsOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {lessonsOpen && (
+              <div className="border-t border-slate-700 p-6 space-y-6">
+                {worksheetLessons.map((lesson, index) => (
+                  <div 
+                    key={lesson.id}
+                    className="bg-white rounded-xl p-6 sm:p-8 border border-gray-200"
+                  >
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 text-blue-700 text-sm font-bold">
+                        {lesson.page_number}
+                      </span>
+                      Lesson {lesson.page_number}
+                    </h3>
+                    
+                    <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed lesson-content">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex, rehypeRaw]}
+                      >
+                        {preprocessForKaTeX(lesson.lesson_text)}
+                      </ReactMarkdown>
+                    </div>
+
+                    {lesson.keywords && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <p className="text-sm text-gray-500">
+                          <span className="font-semibold text-gray-700">Keywords:</span> {lesson.keywords}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
+        )}
+
+        {/* Lesson Content (original markdown content) */}
+        {markdownRaw && (
+          <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 sm:p-8 mb-8">
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-700">
+              <BookOpen className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-2xl font-bold text-white">Additional Notes</h2>
+            </div>
+            
+            <div className="prose prose-invert prose-cyan max-w-none">
+              <div dangerouslySetInnerHTML={rendered} />
+            </div>
+          </div>
+        )}
 
         {/* Practice Quizzes Section */}
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 sm:p-8 mb-8">

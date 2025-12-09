@@ -309,11 +309,12 @@ export default async function PrintableWorksheetPage({ params }) {
       More in {subsection.sections.section_title}
     </Link>
     <br />
+    <br />
     <Link
       href={`/courses/${slug}`}
       className="text-blue-600 underline"
     >
-      View full {subsection.sections.courses.title} course
+      *View full {subsection.sections.courses.title} course with step by step lessons and online quiz modules.*
     </Link>
   </div>
 

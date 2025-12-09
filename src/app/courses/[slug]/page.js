@@ -349,10 +349,12 @@ export default function CoursePage({ params }) {
                                     <Clock className="w-5 h-5 text-cyan-400" />
                                     <span className="font-semibold">{course.duration || 'Self-paced'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-slate-300">
-                                    <Video className="w-5 h-5 text-cyan-400" />
-                                    <span className="font-semibold">Video Lessons</span>
-                                </div>
+                                {course.has_videos && (
+                                    <div className="flex items-center gap-2 text-slate-300">
+                                        <Video className="w-5 h-5 text-cyan-400" />
+                                        <span className="font-semibold">Video Lessons</span>
+                                    </div>
+                                )}
                             </div>
 
                             {enrolled ? (

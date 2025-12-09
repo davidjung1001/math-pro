@@ -1,12 +1,13 @@
-import { Play, BookOpen, Clock, CheckCircle, Star, Lock } from 'lucide-react'
+import { Play, BookOpen, Clock, CheckCircle, Star, Lock, Video } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CourseCard({ course, enrolled, onEnroll, session }) {
   const isFree = course.is_free || !course.price_cents
-  const price = course.price_cents ? `$${(course.price_cents / 100).toFixed(2)}` : 'Free'
+  const price = course.price_cents ? `${(course.price_cents / 100).toFixed(2)}` : 'Free'
   const thumbnailUrl = course.thumbnail_url || `/course-thumbnails/default.jpg`
   const rating = course.average_rating || 0
   const ratingCount = course.rating_count || 0
+  const hasVideos = course.has_videos === true
   
   return (
     <div className="group bg-gradient-to-br from-slate-800/80 to-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/10 flex flex-col">
@@ -39,13 +40,24 @@ export default function CourseCard({ course, enrolled, onEnroll, session }) {
             {isFree ? 'FREE' : 'PREMIUM'}
           </div>
 
-          {/* Enrolled badge */}
-          {enrolled && (
-            <div className="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
-              <CheckCircle className="w-3.5 h-3.5" />
-              Enrolled
-            </div>
-          )}
+          {/* Right side badges container */}
+          <div className="flex items-center gap-2">
+            {/* Video badge */}
+            {hasVideos && (
+              <div className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-300 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 backdrop-blur">
+                <Video className="w-3.5 h-3.5" />
+                VIDEO
+              </div>
+            )}
+
+            {/* Enrolled badge */}
+            {enrolled && (
+              <div className="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Enrolled
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Bottom price badge */}
