@@ -9,6 +9,110 @@ import Link from 'next/link';
 
 export const revalidate = 600;
 
+// Helper function to clean math notation for SEO
+function cleanMathForSEO(text) {
+  if (!text) return '';
+  
+  return text
+    // Remove LaTeX delimiters
+    .replace(/\$\$[\s\S]*?\$\$/g, '') // Display math
+    .replace(/\$[^\$]+?\$/g, '') // Inline math
+    .replace(/\\[\[\]]/g, '') // \[ \] delimiters
+    .replace(/\\[\(\)]/g, '') // \( \) delimiters
+    
+    // Remove LaTeX commands
+    .replace(/\\[a-zA-Z]+\{[^}]*\}/g, '') // \command{content}
+    .replace(/\\[a-zA-Z]+/g, '') // \command
+    
+    // Remove markdown formatting
+    .replace(/[#*_`~]/g, '')
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Links
+    
+    // Clean up whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Generate metadata for SEO
+export async function generateMetadata({ params }) {
+  const { slug, moduleSlug, subsectionSlug } = await params;
+  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const { data: subsection } = await supabase
+    .from('subsections')
+    .select(
+      `id, subsection_title,
+       sections!inner(section_title, courses!inner(slug, title))`
+    )
+    .eq('slug', subsectionSlug)
+    .eq('sections.slug', moduleSlug)
+    .eq('sections.courses.slug', slug)
+    .single();
+
+  if (!subsection) {
+    return {
+      title: 'Worksheet Not Found',
+    };
+  }
+
+  const courseTitle = subsection.sections.courses.title;
+  const subsectionTitle = subsection.subsection_title;
+
+  // Fetch lessons to create description
+  const { data: lessons } = await supabase
+    .from('all_lessons')
+    .select('lesson_text')
+    .eq('subsection_title', subsectionTitle)
+    .eq('course', courseTitle)
+    .order('page_number', { ascending: true })
+    .limit(3); // Get first 3 lessons for description
+
+  // Create SEO-friendly description from lesson content
+  let description = `Free ${subsectionTitle} worksheet for ${courseTitle}. `;
+  
+  if (lessons && lessons.length > 0) {
+    const cleanedContent = lessons
+      .map(l => cleanMathForSEO(l.lesson_text))
+      .join(' ')
+      .substring(0, 300); // Limit to ~300 chars
+    
+    description += cleanedContent;
+  } else {
+    description += `Step-by-step lessons with practice problems and detailed explanations.`;
+  }
+
+  // Ensure description ends properly
+  if (description.length > 155) {
+    description = description.substring(0, 152) + '...';
+  }
+
+  const title = `${subsectionTitle} Worksheet - ${courseTitle} | Free Math Practice`;
+
+  return {
+    title,
+    description,
+    keywords: `${subsectionTitle}, ${courseTitle}, worksheet, practice problems, math help, free worksheet, step-by-step solutions`,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: `https://www.stillymathpro.com/worksheets/free-worksheets/${slug}/${moduleSlug}/${subsectionSlug}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `https://www.stillymathpro.com/worksheets/free-worksheets/${slug}/${moduleSlug}/${subsectionSlug}`,
+    },
+  };
+}
+
 export default async function WorksheetPage({ params }) {
   const { slug, moduleSlug, subsectionSlug } = await params;
   const supabase = createClient(
@@ -254,7 +358,7 @@ export default async function WorksheetPage({ params }) {
             </p>
           </section>
 
-          {/* Navigation - Improved */}
+          {/* Navigation */}
           <nav className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8 border border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
               {/* Previous */}

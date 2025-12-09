@@ -67,10 +67,38 @@ function paginateQuestions(questions) {
 }
 
 // --- Metadata ---
+// --- Metadata ---
+// --- Helper: Clean Math Text for SEO ---
+// Define this utility function *outside* of generateMetadata for clarity
+function cleanMathText(text) {
+  // 1. Remove common delimiters ($$, \$, \), etc.)
+  let cleaned = text.replace(/(\$\$|\$|\\\[|\\\]|\\\(|\\\))/g, '');
+
+  // 2. Replace common LaTeX commands with readable text/symbols
+  cleaned = cleaned.replace(/\\frac{(\w+)}{(\w+)}/g, '$1/$2'); // \frac{a}{b} -> a/b
+  cleaned = cleaned.replace(/\\sqrt{(\w+)}/g, 'square root of $1'); // \sqrt{x} -> square root of x
+  cleaned = cleaned.replace(/\\cdot/g, '*'); // \cdot -> * (multiplication)
+  cleaned = cleaned.replace(/\\pi/g, 'pi'); // \pi -> pi
+  cleaned = cleaned.replace(/\\alpha/g, 'alpha'); // Greek letters
+
+  // 3. Remove other non-essential LaTeX commands
+  cleaned = cleaned.replace(/\\text\{(.+?)\}/g, '$1');
+  cleaned = cleaned.replace(/\\(quad|left|right|begin|end)\w*/g, '');
+
+  // 4. Remove newlines
+  cleaned = cleaned.replace(/\n/g, ' ');
+
+  return cleaned;
+}
+
+
+// --- Metadata (Replace your existing generateMetadata function with this) ---
 export async function generateMetadata({ params }) {
-  const { slug, moduleSlug, subsectionSlug } = await params;
+  // Get both slugs and the setNumber from the URL parameters
+  const { slug, moduleSlug, subsectionSlug, setNumber } = await params; 
   const supabase = getSupabaseClient();
 
+  // 1. Fetch titles
   const { data: subsection } = await supabase
     .from('subsections')
     .select(
@@ -84,8 +112,66 @@ export async function generateMetadata({ params }) {
 
   if (!subsection) return { title: 'Worksheet Not Found' };
 
+  const courseTitle = subsection.sections.courses.title;
+  const sectionTitle = subsection.sections.section_title;
+  const lessonTitle = subsection.subsection_title;
+
+  // 2. Find the relevant quiz ID using setNumber
+  const { data: quizzes } = await supabase
+    .from('quizzes')
+    .select('id, name')
+    .eq('subsection_id', subsection.id)
+    .order('display_order', { ascending: true }); 
+
+  // Select the quiz based on the URL parameter, defaulting to the first quiz (index 0)
+  const quizIndex = parseInt(setNumber, 10) - 1;
+  const quiz = quizzes?.[quizIndex] || quizzes?.[0];
+    
+  // Fallback description if no quiz/problems are found
+  if (!quiz) {
+      return { 
+          title: `${courseTitle} - ${sectionTitle} - ${lessonTitle} | Worksheet`,
+          description: `Printable math problems for ${lessonTitle}. Practice key concepts from the ${sectionTitle} module of the ${courseTitle} course.`
+      };
+  }
+    
+  // 3. Fetch the questions for the selected quiz
+  const { data: quizQuestions } = await supabase
+    .from('quiz_questions')
+    .select(
+      `questions (
+         question_text
+      )`
+    )
+    .eq('quiz_id', quiz.id) 
+    .order('sort_order', { ascending: true })
+    .limit(3); 
+
+  // 4. Construct the Dynamic Description
+  let description = `Practice ${lessonTitle} with this printable math worksheet (${quiz.name}): `;
+  
+  if (quizQuestions && quizQuestions.length > 0) {
+    const questionSnippets = quizQuestions
+      .map(q => q.questions?.question_text || '')
+      .filter(text => text.length > 0)
+      .map(text => {
+        // Use the cleanup function to remove LaTeX clutter
+        let cleanText = cleanMathText(text); 
+        return cleanText.substring(0, 30) + '...'; // Take a shorter snippet for packing more problems in
+      });
+    
+    // Join the snippets to form the body of the description
+    description += questionSnippets.join(' | '); 
+  }
+
+  // 5. Ensure the whole description is within the 120-160 character limit
+  const finalDescription = description.substring(0, 160);
+
+
+  // 6. Return the metadata
   return {
-    title: `${subsection.sections.courses.title} - ${subsection.sections.section_title} - ${subsection.subsection_title} | Worksheet`
+    title: `${courseTitle} - ${sectionTitle} - ${lessonTitle} | Worksheet`,
+    description: finalDescription,
   };
 }
 
