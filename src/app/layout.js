@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import "./globals.css";
+import "katex/dist/katex.min.css";
+
 import Footer from "../components/Footer";
 import SidebarNavigation from "@/components/SidebarNavigation";
 import TrackingInitializer from "@/components/admin/TrackingInitializer";

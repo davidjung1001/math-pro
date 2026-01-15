@@ -1,10 +1,7 @@
-/* ---------- BASE TAILWIND ---------- */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- KaTeX STYLES ---------- */
-@import "katex/dist/katex.min.css";
 
 /* ---------- PRINT SETTINGS ---------- */
 @media print {

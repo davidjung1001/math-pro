@@ -7,7 +7,6 @@ import { CheckCircle, Download, ArrowLeft, ArrowRight, BookOpen } from 'lucide-r
 import { preprocessForKaTeX } from '@/lib/utils/lessonKatex';
 import Link from 'next/link';
 
-export const revalidate = 600;
 
 // Helper function to clean math notation for SEO
 function cleanMathForSEO(text) {
