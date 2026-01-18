@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getHybridTracking } from "@/lib/tracking/sessionStrategies";
@@ -12,50 +12,39 @@ export default function PageViewTracker({
   quizId = null
 }) {
   const pathname = usePathname();
+  const trackedRef = useRef(new Set());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.location.hostname === "localhost") return;
 
-    const logPageViewWhenReady = async () => {
-      const { visitorId, sessionId } = getHybridTracking();
-      if (!visitorId || !sessionId) return;
+    const { visitorId, sessionId } = getHybridTracking();
+    if (!visitorId || !sessionId) return;
 
-      const interval = setInterval(async () => {
-        const { data: exists } = await supabase
-          .from("user_sessions")
-          .select("session_id")
-          .eq("session_id", sessionId)
-          .maybeSingle();
+    const key = `${sessionId}:${pathname}`;
+    if (trackedRef.current.has(key)) return;
 
-        if (exists) {
-          clearInterval(interval);
+    trackedRef.current.add(key);
 
-          // Get current logged-in user
-          const { data: { user } } = await supabase.auth.getUser();
-          const userId = user?.id || null;
-          const userEmail = user?.email || null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
 
-          await supabase.from("page_views").insert({
-            session_id: sessionId,
-            visitor_id: visitorId,
-            user_id: userId,
-            user_email: userEmail,
-            page_path: pathname,
-            page_title: document.title,
-            referrer: document.referrer || null,
-            course_name: courseName,
-            section_name: sectionName,
-            subsection_name: subsectionName,
-            quiz_id: quizId,
-            viewed_at: new Date().toISOString(),
-          });
-        }
-      }, 200);
-    };
-
-    logPageViewWhenReady();
-  }, [pathname, courseName, sectionName, subsectionName, quizId]);
+      await supabase.from("page_views").insert({
+        session_id: sessionId,
+        visitor_id: visitorId,
+        user_id: user?.id || null,
+        user_email: user?.email || null,
+        page_path: pathname,
+        page_title: document.title,
+        referrer: document.referrer || null,
+        course_name: courseName,
+        section_name: sectionName,
+        subsection_name: subsectionName,
+        quiz_id: quizId,
+        viewed_at: new Date().toISOString(),
+      });
+    })();
+  }, [pathname]);
 
   return null;
 }
