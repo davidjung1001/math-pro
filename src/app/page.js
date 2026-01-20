@@ -21,6 +21,7 @@ import OfferedServicesSection from '@/components/ServicesSection';
 import ConsultationSection from '@/components/ConsultationSection';
 import ServerRenderedHero from '@/components/hero-components/ServerRenderedHero';
 import ServerHowItWorks from '@/components/how-it-works/ServerHowItWorks';
+import TestimonialCarousel from '@/components/TestimonialCarousel';
 
 export default function HomePage() {
   return (
@@ -29,8 +30,9 @@ export default function HomePage() {
       <div className="px-4 max-w-full overflow-x-hidden">
         <ServerHowItWorks />
       </div>
+      
       <div className="px-4 max-w-full overflow-x-hidden">
-        <OfferedServicesSection />
+        <TestimonialCarousel />
       </div>
       <div className="px-4 max-w-full overflow-x-hidden">
         <ConsultationSection />
