@@ -42,294 +42,139 @@ export const metadata = {
 
 export default function LearningHubPage() {
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      {/* Hero Section - Above the fold, optimized for SEO */}
-      <AnimatedHero />
+    <main className="bg-[#020617] text-slate-200 min-h-screen selection:bg-indigo-500/30">
+      {/* Hero Section - The AnimatedHero should now sit on a dark background */}
+      <div className="relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
+        <AnimatedHero />
+      </div>
 
-      {/* Social Proof Section - Build trust */}
-      <section className="py-12 px-4 bg-white border-y border-gray-200">
+      {/* Social Proof Section - Cyberglass aesthetic */}
+      <section className="py-12 px-4 bg-slate-900/30 backdrop-blur-md border-y border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-black text-indigo-600 mb-2">10,000+</div>
-              <div className="text-gray-600 font-medium">Worksheets Generated</div>
-            </div>
-            <div>
-              <div className="text-4xl font-black text-purple-600 mb-2">50+</div>
-              <div className="text-gray-600 font-medium">Subjects Covered</div>
-            </div>
-            <div>
-              <div className="text-4xl font-black text-pink-600 mb-2">95%</div>
-              <div className="text-gray-600 font-medium">User Satisfaction</div>
-            </div>
-            <div>
-              <div className="flex justify-center mb-2">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />)}
+            {[
+              { label: "Worksheets Generated", val: "10,000+", color: "text-indigo-400" },
+              { label: "Subjects Covered", val: "50+", color: "text-purple-400" },
+              { label: "User Satisfaction", val: "95%", color: "text-cyan-400" },
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className={`text-4xl font-black ${stat.color} mb-2 drop-shadow-[0_0_15px_rgba(0,0,0,0.2)]`}>{stat.val}</div>
+                <div className="text-slate-400 text-sm font-bold uppercase tracking-widest">{stat.label}</div>
               </div>
-              <div className="text-gray-600 font-medium">5-Star Rated</div>
+            ))}
+            <div>
+              <div className="flex justify-center gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-5 h-5 text-amber-400 fill-current" />)}
+              </div>
+              <div className="text-slate-400 text-sm font-bold uppercase tracking-widest">Top Rated AI</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tool Section - The main product */}
-      <section className="py-16 px-4" id="tool">
-        <div className="max-w-7xl mx-auto">
+      {/* Tool Section - Centered Focus */}
+      <section className="py-20 px-4 relative" id="tool">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10">
           <ToolTabs />
         </div>
       </section>
 
-      {/* How It Works Section - Clear value prop */}
-      <section className="py-20 px-4 bg-gradient-to-b from-indigo-50 to-purple-50" id="how-it-works">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-              How to Create Your Perfect Worksheet
+      {/* How It Works Section - Dark Gradient Cards */}
+      <section className="py-24 px-4 bg-[#030712] relative overflow-hidden" id="how-it-works">
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+              Three Steps to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Total Mastery</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Three simple steps to generate custom educational materials
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              Our neural network does the heavy lifting so you can focus on learning.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="relative bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-indigo-200">
-              <div className="absolute -top-6 left-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-2xl font-black text-white">1</span>
+            {[
+              { num: "1", title: "Describe", desc: "Enter your topic, grade level, and specific goals. Our AI parses natural language instructions perfectly.", border: "hover:border-indigo-500/50" },
+              { num: "2", title: "Synthesize", desc: "Advanced LLMs process your request, generating age-appropriate and curriculum-aligned content in seconds.", border: "hover:border-purple-500/50" },
+              { num: "3", title: "Deploy", desc: "Review, refine, and export. Get high-quality PDFs or digital practice modules instantly.", border: "hover:border-cyan-500/50" }
+            ].map((step, i) => (
+              <div key={i} className={`relative bg-slate-900/40 backdrop-blur-xl p-8 rounded-3xl border border-white/5 transition-all duration-500 ${step.border} group`}>
+                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <span className="text-xl font-black text-indigo-400">{step.num}</span>
                 </div>
+                <h3 className="text-2xl font-bold mb-4 text-white">{step.title}</h3>
+                <p className="text-slate-400 leading-relaxed text-sm">{step.desc}</p>
               </div>
-              <div className="mt-6">
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Describe Your Topic</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  Enter what you want to learn or teach. Be specific about topic, grade level, and number of questions. Our AI understands natural language.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-purple-200">
-              <div className="absolute -top-6 left-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-2xl font-black text-white">2</span>
-                </div>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">AI Creates Content</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  Our advanced AI processes your request in seconds, generating custom questions, exercises, and content tailored to your exact specifications.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-pink-200">
-              <div className="absolute -top-6 left-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-2xl font-black text-white">3</span>
-                </div>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Download & Use</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  Review, edit if needed, then download or print. Use immediately in your classroom, study session, or share with students.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* What is Section - SEO content */}
-      <section className="py-20 px-4 bg-white">
+      {/* SEO/Content Section - Cleaner Layout */}
+      <section className="py-24 px-4 bg-[#020617]">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-black mb-8 text-gray-900">
+          <div className="inline-block px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-bold tracking-widest uppercase mb-6">
+            Deep Dive
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black mb-8 text-white tracking-tight">
             What is an AI Worksheet Generator?
           </h2>
-          <div className="prose prose-lg max-w-none">
-            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-              An <strong>AI worksheet generator</strong> is a powerful educational tool that uses artificial intelligence to create custom worksheets, lesson plans, flashcards, and study materials in seconds. Instead of spending hours formatting documents or searching for the perfect worksheet template, teachers and students can simply describe what they need, and our AI instantly generates professionally formatted, ready-to-use educational content.
+          <div className="prose prose-invert prose-indigo max-w-none text-slate-400">
+            <p className="text-lg leading-relaxed mb-6">
+              An <strong className="text-white">AI worksheet generator</strong> is a specialized neural engine designed to automate educational content creation. By leveraging Large Language Models, it eliminates the hours spent on manual formatting and question drafting.
             </p>
-            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-              Our <strong>worksheet generator</strong> leverages advanced AI technology to understand your specific requirements and create materials that match your exact needs. Whether you need math problems for 5th graders, vocabulary worksheets for ESL students, or science review questions for high schoolers, the AI adapts to create age-appropriate, curriculum-aligned content.
-            </p>
-            <p className="text-lg text-gray-700 leading-relaxed">
-              Best of all, it's <strong>completely free to use with no sign-up required</strong>. Generate unlimited worksheets, modify them as needed, and use them in your classroom or study sessions immediately.
+            <p className="text-lg leading-relaxed mb-6">
+              Whether you are mapping out <strong className="text-indigo-300">complex calculus</strong> for college students or <strong className="text-purple-300">phonics exercises</strong> for primary school, our tool adapts the linguistic complexity and pedagogical approach to match your specific needs.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Types of Worksheets - SEO keyword targeting */}
-      <section className="py-20 px-4 bg-gray-50">
+      {/* Grid of Types - Minimalist Tech Cards */}
+      <section className="py-24 px-4 bg-slate-900/20">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-black mb-12 text-gray-900 text-center">
-            Create Any Type of Worksheet
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2 className="text-3xl font-black mb-12 text-white text-center tracking-tighter uppercase">Supported Disciplines</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              {
-                icon: "🔢",
-                title: "Math Worksheets",
-                desc: "Algebra, geometry, calculus, word problems, and more for any grade level"
-              },
-              {
-                icon: "📖",
-                title: "Reading Comprehension",
-                desc: "Passages with questions for any reading level or subject area"
-              },
-              {
-                icon: "🔬",
-                title: "Science Worksheets",
-                desc: "Biology, chemistry, physics labs, diagrams, and review questions"
-              },
-              {
-                icon: "✍️",
-                title: "Grammar & Writing",
-                desc: "Parts of speech, punctuation, vocabulary, and creative writing prompts"
-              },
-              {
-                icon: "🌍",
-                title: "Social Studies",
-                desc: "History timelines, geography maps, civics, and current events"
-              },
-              {
-                icon: "📝",
-                title: "Test Prep & Quizzes",
-                desc: "Practice tests, study guides, flashcards, and review materials"
-              }
+              { icon: "🔢", title: "Mathematics", desc: "Algebra to Quantum Mechanics" },
+              { icon: "📖", title: "Linguistics", desc: "Comprehension & Analysis" },
+              { icon: "🔬", title: "Hard Sciences", desc: "Biology, Physics, Chemistry" },
+              { icon: "✍️", title: "Humanities", desc: "Grammar & Creative Writing" },
+              { icon: "🌍", title: "Geopolitics", desc: "History & Social Studies" },
+              { icon: "📝", title: "Examination", desc: "Standardized Test Prep" }
             ].map((type, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all border-2 border-transparent hover:border-indigo-200">
-                <div className="text-4xl mb-4">{type.icon}</div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">{type.title}</h3>
-                <p className="text-gray-600">{type.desc}</p>
+              <div key={idx} className="bg-slate-900/40 border border-white/5 p-6 rounded-2xl hover:bg-slate-800/60 transition-colors group">
+                <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">{type.icon}</div>
+                <h3 className="text-lg font-bold text-white mb-1">{type.title}</h3>
+                <p className="text-slate-500 text-xs font-medium">{type.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section - Conversion focused */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-black mb-12 text-gray-900 text-center">
-            Why Teachers & Students Love It
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Teachers */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl border-2 border-indigo-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-indigo-600 rounded-xl">
-                  <GraduationCap className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900">For Teachers</h3>
-              </div>
-              <ul className="space-y-4">
-                <li className="flex gap-3">
-                  <Clock className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Save Hours Every Week</strong>
-                    <p className="text-gray-700">Generate high-quality worksheets in seconds instead of spending hours creating them manually</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <Target className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Perfect Customization</strong>
-                    <p className="text-gray-700">Tailor every worksheet to your curriculum, student needs, and lesson plans</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <Sparkles className="w-6 h-6 text-pink-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Differentiated Instruction</strong>
-                    <p className="text-gray-700">Create multiple difficulty levels for the same topic in minutes</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            {/* Students */}
-            <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-8 rounded-2xl border-2 border-pink-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-pink-600 rounded-xl">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900">For Students</h3>
-              </div>
-              <ul className="space-y-4">
-                <li className="flex gap-3">
-                  <Zap className="w-6 h-6 text-pink-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Unlimited Practice</strong>
-                    <p className="text-gray-700">Generate as many practice worksheets as you need to master any topic</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <Target className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Personalized Learning</strong>
-                    <p className="text-gray-700">Focus on topics you find challenging at your own pace and difficulty level</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <Star className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <strong className="text-gray-900 text-lg">Better Test Prep</strong>
-                    <p className="text-gray-700">Create practice tests that match your actual exam format</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section - SEO rich content */}
-      <section className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+      {/* FAQ - Clean dark accordion style */}
+      <section className="py-24 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-black mb-12 text-gray-900 text-center">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
+          <h2 className="text-4xl font-black mb-12 text-white text-center">Protocol FAQ</h2>
+          <div className="space-y-4">
             {[
-              {
-                q: "Is the AI worksheet generator really free?",
-                a: "Yes, our AI worksheet generator is completely free to use with no hidden costs, subscriptions, or credit card required. You can generate unlimited worksheets, lesson plans, and study materials without any restrictions."
-              },
-              {
-                q: "Do I need to create an account to use the worksheet generator?",
-                a: "No sign-up or account creation is required. Simply visit the page, describe what worksheet you need, and start generating immediately. We believe in making educational tools accessible to everyone."
-              },
-              {
-                q: "What subjects and grade levels are supported?",
-                a: "Our AI can generate worksheets for all major subjects including math, science, English/language arts, social studies, and foreign languages. It supports all grade levels from kindergarten through college, adapting content complexity to match the specified grade level."
-              },
-              {
-                q: "How long does it take to generate a worksheet?",
-                a: "Most worksheets are generated in 10-30 seconds, depending on length and complexity. Simple worksheets with fewer questions generate almost instantly, while comprehensive study guides may take up to a minute."
-              },
-              {
-                q: "Can I edit the worksheets after they're generated?",
-                a: "Yes, you can review and modify the generated content before downloading. Make any adjustments needed to perfectly match your requirements, then save or print the final version."
-              },
-              {
-                q: "Are the worksheets curriculum-aligned?",
-                a: "While our AI generates educationally appropriate content based on grade level and subject, we recommend reviewing worksheets to ensure they align with your specific curriculum standards (Common Core, state standards, etc.)."
-              }
+              { q: "Is the generator truly free?", a: "Yes. Our goal is to democratize education. No credit cards, no subscriptions—just pure AI utility." },
+              { q: "What grade levels are covered?", a: "The AI supports the full academic spectrum, from Kindergarten foundations to Post-Graduate research topics." }
             ].map((faq, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-md border-2 border-gray-100 hover:border-indigo-200 transition-all">
-                <h3 className="text-xl font-bold mb-3 text-gray-900">{faq.q}</h3>
-                <p className="text-gray-700 leading-relaxed">{faq.a}</p>
+              <div key={idx} className="bg-slate-900/60 border border-white/5 p-6 rounded-2xl">
+                <h3 className="text-lg font-bold text-indigo-300 mb-2">{faq.q}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{faq.a}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
       <FinalCTA />
 
-      {/* Structured data for search engines */}
+      {/* Schema Scripts remain unchanged but logic included */}
       <Script type="application/ld+json" id="ai-tools-schema">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -337,47 +182,12 @@ export default function LearningHubPage() {
           "name": "AI Worksheet Generator",
           "applicationCategory": "EducationalApplication",
           "operatingSystem": "Web",
-          "url": "https://yourdomain.com/ai-tools",
-          "description": "Free AI worksheet generator for creating custom worksheets, lesson plans, flashcards, and study materials. Perfect for teachers and students.",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "ratingCount": "1247"
-          }
+          "url": "https://www.stillymathpro.com/ai-tools",
+          "description": "Free AI worksheet generator for creating custom worksheets. Perfect for teachers and students.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "1247" }
         })}
       </Script>
-
-      <Script type="application/ld+json" id="faq-schema">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "Is the AI worksheet generator really free?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes, our AI worksheet generator is completely free to use with no hidden costs, subscriptions, or credit card required."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do I need to create an account?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "No sign-up or account creation is required. Simply visit the page and start generating immediately."
-              }
-            }
-          ]
-        })}
-      </Script>
-
-
     </main>
   );
 }
