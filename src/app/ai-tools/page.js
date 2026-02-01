@@ -25,7 +25,7 @@ export const metadata = {
     title: "Free AI Worksheet Generator – Smart Study Hub",
     description:
       "Create custom worksheets, lesson plans, and study materials with AI in seconds. Free for teachers and students.",
-    url: "https://yourdomain.com/ai-tools",
+    url: "https://www.stillymathpro.com/ai-tools",
     siteName: "Smart Study Hub",
     images: [
       {
