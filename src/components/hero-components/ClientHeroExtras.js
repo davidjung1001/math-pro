@@ -49,27 +49,106 @@ export default function ClientHeroExtras() {
           </span>
         </motion.div>
 
-        {/* SAT Destroyer Course Card */}
-        <Link href="/courses" passHref>
+       {/* AI Generator Preview Card */}
+        <Link href="/ai-tools" passHref>
           <motion.div
             whileHover={{ scale: 1.03, y: -2 }}
-            className="group cursor-pointer p-6 rounded-2xl border-2 border-red-200 hover:border-red-400 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden bg-gradient-to-br from-red-50 to-red-100 h-[480px] flex flex-col justify-between"
+            className="group cursor-pointer p-6 rounded-2xl border-2 border-cyan-400 hover:border-cyan-300 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-cyan-900 h-[480px] flex flex-col justify-between"
           >
-            <div className="absolute top-3 right-3 bg-white text-red-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm z-10 flex items-center gap-1">
+            <div className="absolute top-3 right-3 bg-cyan-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm z-10 flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
-              Popular
+              Hot
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">🔥 SAT Destroyer</h3>
-            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-              Our most popular course for crushing the SAT with shortcuts and strategies
+            <h3 className="text-2xl font-bold text-white mb-2">🤖 AI Generator</h3>
+            <p className="text-cyan-100 text-sm mb-4 leading-relaxed">
+              Transform your ideas into reality with cutting-edge AI tools and generators
             </p>
 
-            <div className="bg-white rounded-xl flex items-center justify-center h-40 shadow-md text-red-500 font-extrabold text-lg">
-              SAT Destroyer Preview
+            <div className="bg-gray-950 rounded-xl flex flex-col gap-3 p-4 h-40 shadow-md relative overflow-hidden border border-cyan-500/30">
+              {/* Animated typing effect - Question */}
+              <motion.div
+                className="text-xs text-cyan-400 font-mono flex items-center gap-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <span className="text-purple-400">Prompt:</span>
+                <motion.span
+                  initial={{ width: 0 }}
+                  animate={{ width: "auto" }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                >
+                  Generate worksheet...
+                </motion.span>
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                  className="text-cyan-400"
+                >
+                  |
+                </motion.span>
+              </motion.div>
+
+              {/* Generating animation */}
+              <motion.div className="flex-1 bg-gray-900 rounded-lg p-3 border border-cyan-500/20 relative overflow-hidden">
+                {/* Worksheet lines appearing */}
+                <motion.div className="space-y-2">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="h-2 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: "100%", opacity: 1 }}
+                      transition={{
+                        delay: 0.5 + i * 0.3,
+                        duration: 0.8,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                      }}
+                    />
+                  ))}
+                </motion.div>
+
+                {/* AI processing indicator */}
+                <motion.div
+                  className="absolute bottom-2 right-2 flex items-center gap-1 text-xs text-cyan-400"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <motion.div
+                    className="w-1 h-1 bg-cyan-400 rounded-full"
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                  <motion.div
+                    className="w-1 h-1 bg-cyan-400 rounded-full"
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                  />
+                  <motion.div
+                    className="w-1 h-1 bg-cyan-400 rounded-full"
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+                  />
+                </motion.div>
+
+                {/* Glowing effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent"
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
+              </motion.div>
             </div>
 
-            <span className="font-semibold text-sm text-red-600 group-hover:text-red-700 inline-flex items-center gap-1 mt-4">
-              Explore Course →
+            <span className="font-semibold text-sm text-cyan-400 group-hover:text-cyan-300 inline-flex items-center gap-1 mt-4">
+              Explore AI Tools →
             </span>
           </motion.div>
         </Link>
