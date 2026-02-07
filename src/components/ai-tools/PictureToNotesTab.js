@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useRef } from "react"
-import { Upload, Image as ImageIcon, Sparkles, FileText, AlertCircle, Camera, CheckCircle, Download } from "lucide-react"
+import { Upload, Image as ImageIcon, Sparkles, FileText, AlertCircle, Camera, CheckCircle, Download, X } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { getHybridTracking } from "@/lib/tracking/sessionStrategies"
+import { jsPDF } from "jspdf"
 
 export default function PictureToNotesTab() {
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(null)
+  const [imageFiles, setImageFiles] = useState([]) // Changed to array
+  const [imagePreviews, setImagePreviews] = useState([]) // Changed to array
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [progress, setProgress] = useState(0)
@@ -16,32 +17,49 @@ export default function PictureToNotesTab() {
   const fileInputRef = useRef(null)
 
   const handleImageUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    if (!file.type.startsWith('image/')) {
-      setError("Please upload a valid image file (JPG, PNG, etc.)")
-      return
-    }
+    // Validate each file
+    const validFiles = []
+    const newPreviews = []
 
-    if (file.size > 10 * 1024 * 1024) {
-      setError("Image size must be less than 10MB")
-      return
-    }
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        setError("Please upload only valid image files (JPG, PNG, etc.)")
+        return
+      }
 
-    setImageFile(file)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Each image must be less than 10MB")
+        return
+      }
+
+      validFiles.push(file)
+
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        newPreviews.push(reader.result)
+        if (newPreviews.length === validFiles.length) {
+          setImagePreviews(prev => [...prev, ...newPreviews])
+        }
+      }
+      reader.readAsDataURL(file)
+    })
+
+    setImageFiles(prev => [...prev, ...validFiles])
     setError("")
-    
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setImagePreview(reader.result)
-    }
-    reader.readAsDataURL(file)
+  }
+
+  const removeImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleGenerate = async () => {
-    if (!imageFile) {
-      setError("Please upload an image first")
+    if (imageFiles.length === 0) {
+      setError("Please upload at least one image")
       return
     }
 
@@ -54,47 +72,51 @@ export default function PictureToNotesTab() {
       await supabase.from('ai_generations').insert({
         visitor_id: visitorId,
         topic: 'Picture to Notes',
-        num_questions: 1
+        num_questions: imageFiles.length
       })
     } catch (err) {
       console.error('Tracking error:', err)
     }
     
     const progressInterval = setInterval(() => {
-      setProgress(prev => (prev >= 90 ? prev : prev + 8))
-    }, 400)
+      setProgress(prev => (prev >= 90 ? prev : prev + 5))
+    }, 500)
 
     try {
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        const base64Image = reader.result
-
-        const res = await fetch("/api/ai-tool", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            toolType: "PictureToNotes",
-            inputData: { 
-              image: base64Image,
-              outputFormat 
-            }
-          }),
+      // Convert all images to base64
+      const base64Images = await Promise.all(
+        imageFiles.map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result)
+            reader.readAsDataURL(file)
+          })
         })
+      )
 
-        if (!res.ok) throw new Error("Failed to generate notes")
+      const res = await fetch("/api/ai-tool", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toolType: "PictureToNotes",
+          inputData: { 
+            images: base64Images, // Changed to array
+            outputFormat 
+          }
+        }),
+      })
 
-        const data = await res.json()
-        setProgress(100)
-        clearInterval(progressInterval)
-        
-        setTimeout(() => {
-          setGeneratedNotes(data.notes)
-          setLoading(false)
-          setProgress(0)
-        }, 500)
-      }
+      if (!res.ok) throw new Error("Failed to generate notes")
+
+      const data = await res.json()
+      setProgress(100)
+      clearInterval(progressInterval)
       
-      reader.readAsDataURL(imageFile)
+      setTimeout(() => {
+        setGeneratedNotes(data.notes)
+        setLoading(false)
+        setProgress(0)
+      }, 500)
       
     } catch (err) {
       clearInterval(progressInterval)
@@ -105,21 +127,102 @@ export default function PictureToNotesTab() {
     }
   }
 
-  const handleDownload = () => {
+  const handleDownloadPDF = () => {
     if (!generatedNotes) return
     
-    const element = document.createElement("a")
-    const file = new Blob([generatedNotes.content], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `notes-${Date.now()}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 20
+    const maxWidth = pageWidth - (margin * 2)
+    let y = margin
+
+    // Title
+    doc.setFontSize(18)
+    doc.setFont(undefined, 'bold')
+    doc.text("Study Notes", margin, y)
+    y += 15
+
+    // Process markdown content
+    const lines = generatedNotes.content.split('\n')
+    
+    lines.forEach(line => {
+      // Check if we need a new page
+      if (y > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+
+      // Headers
+      if (line.startsWith('## ')) {
+        doc.setFontSize(16)
+        doc.setFont(undefined, 'bold')
+        const text = line.replace('## ', '')
+        doc.text(text, margin, y)
+        y += 10
+      } else if (line.startsWith('### ')) {
+        doc.setFontSize(14)
+        doc.setFont(undefined, 'bold')
+        const text = line.replace('### ', '')
+        doc.text(text, margin, y)
+        y += 8
+      } else if (line.startsWith('**') && line.endsWith('**')) {
+        // Bold text
+        doc.setFontSize(12)
+        doc.setFont(undefined, 'bold')
+        const text = line.replace(/\*\*/g, '')
+        const splitText = doc.splitTextToSize(text, maxWidth)
+        doc.text(splitText, margin, y)
+        y += splitText.length * 6
+      } else if (line.startsWith('- ') || line.startsWith('• ')) {
+        // Bullet points
+        doc.setFontSize(11)
+        doc.setFont(undefined, 'normal')
+        const text = line.replace(/^[-•]\s*/, '')
+        const splitText = doc.splitTextToSize(text, maxWidth - 10)
+        doc.text('•', margin + 5, y)
+        doc.text(splitText, margin + 15, y)
+        y += splitText.length * 6
+      } else if (line.trim() === '---') {
+        // Horizontal line
+        doc.setDrawColor(200, 200, 200)
+        doc.line(margin, y, pageWidth - margin, y)
+        y += 8
+      } else if (line.trim() !== '') {
+        // Normal text
+        doc.setFontSize(11)
+        doc.setFont(undefined, 'normal')
+        // Remove markdown formatting
+        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
+        const splitText = doc.splitTextToSize(cleanText, maxWidth)
+        doc.text(splitText, margin, y)
+        y += splitText.length * 6
+      } else {
+        // Empty line
+        y += 4
+      }
+    })
+
+    doc.save(`notes-${Date.now()}.pdf`)
+  }
+
+  const handleCopyToClipboard = () => {
+    if (!generatedNotes) return
+    
+    // Convert markdown to plain text for clipboard
+    const plainText = generatedNotes.content
+      .replace(/^##\s+/gm, '')
+      .replace(/^###\s+/gm, '')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+    
+    navigator.clipboard.writeText(plainText)
+    alert('Notes copied to clipboard!')
   }
 
   const resetTool = () => {
-    setImageFile(null)
-    setImagePreview(null)
+    setImageFiles([])
+    setImagePreviews([])
     setGeneratedNotes(null)
     setError("")
   }
@@ -129,20 +232,14 @@ export default function PictureToNotesTab() {
     if (!text) return ''
     
     return text
-      // Headers
       .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-purple-300 mt-4 mb-2">$1</h3>')
       .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-pink-300 mt-6 mb-3">$1</h2>')
       .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold text-white mt-6 mb-4">$1</h1>')
-      // Bold
       .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-      // Italics
       .replace(/\*(.+?)\*/g, '<em class="text-indigo-300">$1</em>')
-      // Bullet points
       .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
       .replace(/^• (.+)$/gm, '<li class="ml-4">$1</li>')
-      // Horizontal rules
       .replace(/^---$/gm, '<hr class="border-gray-700 my-4" />')
-      // Line breaks
       .replace(/\n\n/g, '<br/><br/>')
       .replace(/\n/g, '<br/>')
   }
@@ -174,39 +271,68 @@ export default function PictureToNotesTab() {
                 <div className="space-y-4">
                   <label className="flex items-center gap-2 text-pink-300 font-semibold text-sm uppercase tracking-wider">
                     <ImageIcon className="w-4 h-4" />
-                    Upload Your Notes
+                    Upload Your Notes ({imageFiles.length} image{imageFiles.length !== 1 ? 's' : ''} selected)
                   </label>
                   
-                  {!imagePreview ? (
+                  {imagePreviews.length === 0 ? (
                     <div 
                       onClick={() => fileInputRef.current?.click()}
                       className="border-2 border-dashed border-gray-700 rounded-xl p-12 text-center cursor-pointer hover:border-pink-500 transition-all bg-gray-800/20 hover:bg-gray-800/40"
                     >
                       <Upload className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                       <p className="text-gray-400 mb-2">Click to upload or drag & drop</p>
-                      <p className="text-gray-600 text-sm">PNG, JPG, or JPEG (max 10MB)</p>
+                      <p className="text-gray-600 text-sm">PNG, JPG, or JPEG (max 10MB each)</p>
+                      <p className="text-gray-500 text-xs mt-2">You can upload multiple images at once!</p>
                       <input
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleImageUpload}
                         className="hidden"
                       />
                     </div>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border border-gray-700">
-                      <img 
-                        src={imagePreview} 
-                        alt="Uploaded notes" 
-                        className="w-full h-auto max-h-96 object-contain bg-gray-800"
-                      />
+                    <>
+                      {/* Image Previews Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={index} className="relative rounded-xl overflow-hidden border border-gray-700 group">
+                            <img 
+                              src={preview} 
+                              alt={`Note ${index + 1}`} 
+                              className="w-full h-40 object-cover bg-gray-800"
+                            />
+                            <button
+                              onClick={() => removeImage(index)}
+                              className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                              <p className="text-white text-xs font-medium">Image {index + 1}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add More Button */}
                       <button
-                        onClick={resetTool}
-                        className="absolute top-4 right-4 bg-red-500/80 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-all"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full px-4 py-3 bg-gray-800/60 border border-gray-700 rounded-xl text-gray-300 hover:text-white hover:border-pink-500 transition-all flex items-center gap-2 justify-center"
                       >
-                        Remove
+                        <Upload className="w-4 h-4" />
+                        Add More Images
                       </button>
-                    </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </>
                   )}
                 </div>
 
@@ -251,7 +377,7 @@ export default function PictureToNotesTab() {
                     <div className="flex items-center justify-between">
                       <span className="text-pink-300 font-medium flex items-center gap-2 text-sm">
                         <Sparkles className="w-4 h-4 animate-spin text-purple-400" />
-                        Analyzing image and generating notes...
+                        Analyzing {imageFiles.length} image{imageFiles.length !== 1 ? 's' : ''} and generating notes...
                       </span>
                       <span className="text-purple-400 font-mono font-bold">{progress}%</span>
                     </div>
@@ -267,11 +393,11 @@ export default function PictureToNotesTab() {
                 {/* Generate Button */}
                 <button 
                   onClick={handleGenerate} 
-                  disabled={loading || !imageFile}
+                  disabled={loading || imageFiles.length === 0}
                   className="w-full sm:w-auto px-10 py-4 bg-pink-600 hover:bg-pink-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] flex items-center gap-2 justify-center group uppercase tracking-widest text-sm"
                 >
                   <Sparkles className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  {loading ? "Processing..." : "Generate Notes"}
+                  {loading ? "Processing..." : `Generate Notes from ${imageFiles.length} Image${imageFiles.length !== 1 ? 's' : ''}`}
                 </button>
               </>
             ) : (
@@ -297,13 +423,23 @@ export default function PictureToNotesTab() {
                   />
                 </div>
 
-                <button
-                  onClick={handleDownload}
-                  className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 justify-center"
-                >
-                  <Download className="w-5 h-5" />
-                  Download Notes
-                </button>
+                {/* Download Options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 justify-center"
+                  >
+                    <Download className="w-5 h-5" />
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={handleCopyToClipboard}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 justify-center"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Copy to Clipboard
+                  </button>
+                </div>
               </div>
             )}
           </div>

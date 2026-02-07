@@ -97,22 +97,24 @@ CRITICAL RULES:
   }
 
   // ==================== NEW: PICTURE TO NOTES ====================
-  if (toolType === "PictureToNotes") {
-    const { image, outputFormat = "organized" } = inputData;
+  // Inside the PictureToNotes section of route.js
 
-    if (!image) {
-      return new Response(JSON.stringify({ error: "No image provided" }), { status: 400 });
-    }
+if (toolType === "PictureToNotes") {
+  const { images, outputFormat = "organized" } = inputData; // Changed from 'image' to 'images'
 
-    const formatInstructions = {
-      organized: "Convert the notes into well-organized, clearly formatted study notes with headers, bullet points, and proper structure. Use markdown formatting.",
-      flashcards: "Convert the notes into flashcard format. For each flashcard, use this format:\n\n**Q:** [Question or term]\n**A:** [Answer or definition]\n\nCreate at least 10 flashcards covering all major concepts.",
-      summary: "Create a concise summary of the main concepts and key points from the notes. Include the most important information in a clear, digestible format."
-    };
+  if (!images || images.length === 0) {
+    return new Response(JSON.stringify({ error: "No images provided" }), { status: 400 });
+  }
 
-    const prompt = `You are an expert at extracting and organizing information from handwritten or typed notes.
+  const formatInstructions = {
+    organized: "Convert the notes into well-organized, clearly formatted study notes with headers, bullet points, and proper structure. Use markdown formatting. If multiple images are provided, combine all content logically.",
+    flashcards: "Convert the notes into flashcard format. For each flashcard, use this format:\n\n**Q:** [Question or term]\n**A:** [Answer or definition]\n\nCreate at least 10 flashcards covering all major concepts from ALL images.",
+    summary: "Create a concise summary of the main concepts and key points from the notes. Include the most important information in a clear, digestible format. Combine information from all images."
+  };
 
-Analyze the provided image and extract all text content. Then, ${formatInstructions[outputFormat]}
+  const prompt = `You are an expert at extracting and organizing information from handwritten or typed notes.
+
+Analyze the ${images.length} provided image${images.length > 1 ? 's' : ''} and extract all text content from each. Then, ${formatInstructions[outputFormat]}
 
 FORMATTING RULES:
 - Use clear headers (use ## for main topics, ### for subtopics)
@@ -121,58 +123,62 @@ FORMATTING RULES:
 - Use *italics* for emphasis or examples
 - For math notation, use standard text representation (e.g., x^2, sqrt(x), a/b)
 - Make it clean, readable, and well-structured
-- If the image is unclear or text is ambiguous, do your best to interpret it
+- If any image is unclear or text is ambiguous, do your best to interpret it
 - Maintain the logical flow and organization of the original notes
+- If multiple images are provided, combine them into a cohesive set of notes
 
 OUTPUT ONLY THE FORMATTED NOTES - no preamble, no "Here are your notes:", just start with the content.`;
 
-    try {
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      const response = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: { 
-                  url: image,
-                  detail: "high"
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
-      });
-
-      const notesContent = response.choices[0].message.content;
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          notes: {
-            content: notesContent,
-            format: outputFormat
-          }
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
+  try {
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // Build content array with text prompt + all images
+    const content = [
+      { type: "text", text: prompt },
+      ...images.map(image => ({
+        type: "image_url",
+        image_url: { 
+          url: image,
+          detail: "high"
         }
-      );
-    } catch (error) {
-      console.error("OpenAI Vision API Error:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to process image. Please try again." }),
-        { status: 500 }
-      );
-    }
+      }))
+    ];
+    
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: content
+        }
+      ],
+      max_tokens: 3000, // Increased for multiple images
+      temperature: 0.3,
+    });
+
+    const notesContent = response.choices[0].message.content;
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        notes: {
+          content: notesContent,
+          format: outputFormat
+        }
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  } catch (error) {
+    console.error("OpenAI Vision API Error:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to process images. Please try again." }),
+      { status: 500 }
+    );
   }
+}
 }
 
 // Parse AI response into structured question objects
