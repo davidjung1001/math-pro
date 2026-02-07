@@ -19,14 +19,16 @@ function normalizeLatex(text) {
 export async function POST(req) {
   const { toolType, inputData, user } = await req.json();
 
-  if (toolType !== "Worksheet") {
+  if (toolType !== "Worksheet" && toolType !== "PictureToNotes") {
     return new Response(JSON.stringify({ error: "Invalid tool type" }), { status: 400 });
   }
 
-  const { topic, numQuestions, difficulty = "Medium", notes = "" } = inputData;
+  // ==================== YOUR ORIGINAL WORKSHEET CODE (UNCHANGED) ====================
+  if (toolType === "Worksheet") {
+    const { topic, numQuestions, difficulty = "Medium", notes = "" } = inputData;
 
-  // AI prompt - generates structured multiple choice questions
-  const prompt = `
+    // AI prompt - generates structured multiple choice questions
+    const prompt = `
 Generate exactly ${numQuestions} multiple-choice questions about "${topic}" at ${difficulty} difficulty level.
 
 ${notes ? `Use this context for question generation:\n${notes}\n` : ''}
@@ -60,37 +62,116 @@ CRITICAL RULES:
 - Do NOT add intro text or conclusion - ONLY the numbered questions
 `;
 
-  try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-    });
+    try {
+      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const response = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      });
 
-    const rawText = response.choices[0].message.content;
-    const normalized = normalizeLatex(rawText);
+      const rawText = response.choices[0].message.content;
+      const normalized = normalizeLatex(rawText);
 
-    // Parse the response into structured questions
-    const questions = parseWorksheet(normalized);
+      // Parse the response into structured questions
+      const questions = parseWorksheet(normalized);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        questions: questions,
-        locked: !user?.loggedIn,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  } catch (error) {
-    console.error("OpenAI API Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to generate worksheet" }),
-      { status: 500 }
-    );
+      return new Response(
+        JSON.stringify({
+          success: true,
+          questions: questions,
+          locked: !user?.loggedIn,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    } catch (error) {
+      console.error("OpenAI API Error:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate worksheet" }),
+        { status: 500 }
+      );
+    }
+  }
+
+  // ==================== NEW: PICTURE TO NOTES ====================
+  if (toolType === "PictureToNotes") {
+    const { image, outputFormat = "organized" } = inputData;
+
+    if (!image) {
+      return new Response(JSON.stringify({ error: "No image provided" }), { status: 400 });
+    }
+
+    const formatInstructions = {
+      organized: "Convert the notes into well-organized, clearly formatted study notes with headers, bullet points, and proper structure. Use markdown formatting.",
+      flashcards: "Convert the notes into flashcard format. For each flashcard, use this format:\n\n**Q:** [Question or term]\n**A:** [Answer or definition]\n\nCreate at least 10 flashcards covering all major concepts.",
+      summary: "Create a concise summary of the main concepts and key points from the notes. Include the most important information in a clear, digestible format."
+    };
+
+    const prompt = `You are an expert at extracting and organizing information from handwritten or typed notes.
+
+Analyze the provided image and extract all text content. Then, ${formatInstructions[outputFormat]}
+
+FORMATTING RULES:
+- Use clear headers (use ## for main topics, ### for subtopics)
+- Use bullet points (•) for lists
+- Use **bold** for important terms and concepts
+- Use *italics* for emphasis or examples
+- For math notation, use standard text representation (e.g., x^2, sqrt(x), a/b)
+- Make it clean, readable, and well-structured
+- If the image is unclear or text is ambiguous, do your best to interpret it
+- Maintain the logical flow and organization of the original notes
+
+OUTPUT ONLY THE FORMATTED NOTES - no preamble, no "Here are your notes:", just start with the content.`;
+
+    try {
+      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const response = await client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              {
+                type: "image_url",
+                image_url: { 
+                  url: image,
+                  detail: "high"
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.3,
+      });
+
+      const notesContent = response.choices[0].message.content;
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          notes: {
+            content: notesContent,
+            format: outputFormat
+          }
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    } catch (error) {
+      console.error("OpenAI Vision API Error:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to process image. Please try again." }),
+        { status: 500 }
+      );
+    }
   }
 }
 

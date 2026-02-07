@@ -194,6 +194,68 @@ export default function LearningHubPage() {
         </div>
       </section>
 
+      {/* Picture to Notes SEO Section */}
+<section className="py-16 px-4 bg-slate-900/20">
+  <div className="max-w-4xl mx-auto">
+    <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+      Convert Handwritten Notes to Digital Text with AI
+    </h2>
+    <div className="prose prose-invert prose-lg max-w-none text-slate-300 space-y-6 leading-relaxed">
+      <p>
+        Our <strong className="text-white">Picture to Notes AI</strong> uses advanced OCR (Optical Character Recognition) and artificial intelligence to instantly convert handwritten or printed notes into beautifully formatted digital study materials. Simply snap a photo of your notes and watch as AI transforms them into organized, searchable text.
+      </p>
+      <p>
+        Perfect for students who want to digitize lecture notes, organize messy handwriting, or create flashcards from textbook pages. The AI can extract text from photos, clean up formatting, and even reorganize content into study guides, summaries, or flashcard sets.
+      </p>
+      <p>
+        Whether you're studying for exams, reviewing class materials, or trying to make sense of rushed lecture notes, our <strong className="text-indigo-300">free note converter</strong> makes it easy to transform any written content into professional study materials in seconds.
+      </p>
+    </div>
+  </div>
+</section>
+
+{/* Use Cases for Picture to Notes */}
+<section className="py-16 px-4 bg-[#020617]">
+  <div className="max-w-6xl mx-auto">
+    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-white text-center">
+      What Can You Do with Picture to Notes AI?
+    </h2>
+    <div className="grid md:grid-cols-2 gap-6">
+      {[
+        {
+          title: "Digitize Handwritten Notes",
+          desc: "Convert messy handwritten lecture notes into clean, organized digital text that's easy to search and study from."
+        },
+        {
+          title: "Create Flashcards from Textbooks",
+          desc: "Take photos of textbook pages and automatically generate flashcards with key terms and definitions."
+        },
+        {
+          title: "Organize Class Materials",
+          desc: "Transform scattered notes from different classes into well-structured study guides organized by topic."
+        },
+        {
+          title: "Study on the Go",
+          desc: "Snap photos of whiteboards, presentations, or study materials and review them anywhere from your phone."
+        },
+        {
+          title: "Generate Summaries",
+          desc: "Get concise summaries of lengthy notes to quickly review main concepts before exams."
+        },
+        {
+          title: "Share with Study Groups",
+          desc: "Convert your notes to digital format and easily share them with classmates and study partners."
+        }
+      ].map((useCase, idx) => (
+        <div key={idx} className="bg-slate-900/60 border border-slate-700/50 p-6 rounded-xl hover:border-pink-500/50 transition-colors">
+          <h3 className="text-xl font-bold text-pink-300 mb-3">{useCase.title}</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">{useCase.desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
       {/* FAQ Section - Critical for SEO */}
       <section className="py-16 px-4 bg-slate-900/20">
         <div className="max-w-4xl mx-auto">
