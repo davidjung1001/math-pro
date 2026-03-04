@@ -1,31 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight, BarChart3, Target, TrendingUp, CheckCircle2, Sparkles } from "lucide-react";
 import emailjs from "@emailjs/browser";
 
 export default function DiagnosticForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const formRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSending(true);
 
     emailjs
       .sendForm(
         "service_dm26ec6",
         "template_avf8f0f",
-        e.target,
+        formRef.current,
         "lbYksoLilwFR_9FNF"
       )
       .then(
-        (result) => {
-          console.log(result.text);
+        () => {
           setSubmitted(true);
+          setSending(false);
         },
         (error) => {
-          console.error(error.text);
+          console.error(error);
           alert("Something went wrong. Please try again later.");
+          setSending(false);
         }
       );
   };
@@ -84,14 +88,23 @@ export default function DiagnosticForm() {
               <p className="text-gray-700 mt-2">Takes less than 2 minutes • Results delivered instantly</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {/*
+              name attributes match EmailJS template: {{user_name}}, {{user_email}}, {{grade}}, {{currentClass}}, {{title}}, {{time}}
+            */}
+            <form ref={formRef} onSubmit={handleSubmit} className="p-8 space-y-6">
+              {/* Hidden fields to populate EmailJS template variables */}
+              <input type="hidden" name="title" value="Free Diagnostic Test Request" />
+              <input type="hidden" name="time" value={new Date().toLocaleString()} />
+
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block font-semibold text-gray-900 mb-2" htmlFor="name">Student's Name</label>
+                  <label className="block font-semibold text-gray-900 mb-2" htmlFor="user_name">
+                    Student's Name <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    id="name"
-                    name="name"
+                    id="user_name"
+                    name="user_name"
                     required
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 outline-none"
                     placeholder="e.g. Jamie Smith"
@@ -99,7 +112,9 @@ export default function DiagnosticForm() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-900 mb-2" htmlFor="grade">Current Grade Level</label>
+                  <label className="block font-semibold text-gray-900 mb-2" htmlFor="grade">
+                    Current Grade Level <span className="text-red-500">*</span>
+                  </label>
                   <select
                     id="grade"
                     name="grade"
@@ -107,13 +122,17 @@ export default function DiagnosticForm() {
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 outline-none"
                   >
                     <option value="">Select grade</option>
-                    {Array.from({ length: 7 }, (_, i) => <option key={i}>{i+6}th Grade</option>)}
+                    {Array.from({ length: 7 }, (_, i) => (
+                      <option key={i} value={`${i + 6}th Grade`}>{i + 6}th Grade</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-900 mb-2" htmlFor="currentClass">Current Math Class</label>
+                <label className="block font-semibold text-gray-900 mb-2" htmlFor="currentClass">
+                  Current Math Class <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   id="currentClass"
@@ -125,11 +144,13 @@ export default function DiagnosticForm() {
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-900 mb-2" htmlFor="email">Parent/Student Email</label>
+                <label className="block font-semibold text-gray-900 mb-2" htmlFor="user_email">
+                  Parent/Student Email <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="email"
-                  id="email"
-                  name="email"
+                  id="user_email"
+                  name="user_email"
                   required
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 outline-none"
                   placeholder="you@example.com"
@@ -138,9 +159,10 @@ export default function DiagnosticForm() {
 
               <button
                 type="submit"
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold text-lg py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg"
+                disabled={sending}
+                className="w-full bg-gray-900 hover:bg-gray-800 disabled:opacity-60 text-white font-bold text-lg py-4 px-8 rounded-xl flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg"
               >
-                Get My Free Diagnostic Test
+                {sending ? "Sending..." : "Get My Free Diagnostic Test"}
                 <ArrowRight className="w-5 h-5" />
               </button>
 
