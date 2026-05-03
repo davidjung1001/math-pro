@@ -7,7 +7,7 @@ export async function fetchUserProfile(userId) {
   const { data, error } = await supabase
     .from('user_profiles')
     // Select the columns you need, including the UUID column named 'id'
-    .select('id, display_name, plan, created_at, email, is_admin') 
+    .select('id, display_name, plan, created_at, email, is_admin, role') 
     // Query the 'id' column with the user's UUID
     .eq('id', userId) 
     .single()

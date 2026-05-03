@@ -68,6 +68,7 @@ export default function RegisterPage() {
             display_name: `${firstName} ${lastName}`,
             email,
             plan,
+            role: userRole,
           },
         ])
 
@@ -140,8 +141,8 @@ export default function RegisterPage() {
           required
         >
           <option value="Student">Student</option>
-          <option value="Teacher">Teacher</option>
           <option value="Parent">Parent</option>
+          <option value="Teacher">Teacher / Tutor</option>
         </select>
 
         <select
