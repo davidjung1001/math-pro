@@ -225,69 +225,67 @@ export default async function WorksheetPage({ params }) {
         }}
       />
 
-      <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen py-8 sm:py-12">
+      <div className="bg-white min-h-screen py-8 sm:py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <header className="mb-8 sm:mb-12">
-            <nav className="text-sm text-gray-600 mb-4">
-              <Link href="/worksheets/free-worksheets" className="hover:text-blue-600">
-                Free Worksheets
-              </Link>
-              <span className="mx-2">/</span>
-              <Link
-                href={`/worksheets/free-worksheets/${slug}`}
-                className="hover:text-blue-600"
-              >
-                {courseTitle}
-              </Link>
-              <span className="mx-2">/</span>
-              <span className="text-gray-900">{subsectionTitle}</span>
-            </nav>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+          {/* Breadcrumb */}
+          <nav className="text-sm text-gray-400 mb-8 flex items-center gap-1.5 flex-wrap">
+            <Link href="/worksheets/free-worksheets" className="hover:text-black transition-colors">
+              Free Worksheets
+            </Link>
+            <span>/</span>
+            <Link href={`/worksheets/free-worksheets/${slug}`} className="hover:text-black transition-colors">
+              {courseTitle}
+            </Link>
+            <span>/</span>
+            <span className="text-black font-medium">{subsectionTitle}</span>
+          </nav>
+
+          {/* Header */}
+          <header className="mb-10 border-b border-gray-100 pb-10">
+            <div className="flex flex-wrap gap-2 mb-5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase px-3 py-1.5 border border-black text-black">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Free
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase px-3 py-1.5 bg-black text-white">
+                <Download className="w-3.5 h-3.5" />
+                PDF Available
+              </span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black mb-4 leading-[1.05] tracking-tight">
               {subsectionTitle}
             </h1>
 
-            <p className="text-lg text-gray-600 mb-6">
-              Step-by-step lessons for {courseTitle}
+            <p className="text-base text-gray-500 mb-7">
+              {courseTitle} — step-by-step lessons
             </p>
 
-            <div className="flex flex-wrap gap-3 text-sm">
-              <span className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold">
-                <CheckCircle className="w-4 h-4" />
-                100% Free
-              </span>
-              <span className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
-                <Download className="w-4 h-4" />
-                Instant Access
-              </span>
-            </div>
-          </header>
-
-          {/* Ready to Practice button */}
-          <div className="mb-8">
             <Link
               href={`/worksheets/free-worksheets/${slug}/${moduleSlug}/${subsectionSlug}/printable-pdf/1`}
-              className="block w-full sm:inline-flex sm:w-auto items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors text-center"
+              className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-black text-white font-bold text-sm tracking-wide hover:bg-gray-900 transition-colors"
             >
-              Worksheet PDF 
-              <Download className="w-5 h-5 ml-2 inline" />
+              <Download className="w-4 h-4" />
+              Get Worksheet PDF
             </Link>
-          </div>
+          </header>
 
           {/* Lessons */}
-          <section className="space-y-6 mb-12">
+          <section className="space-y-0 mb-12 border border-gray-200">
             {lessons?.map((lesson, index) => {
               const nextLessonInSubsection = lessons[index + 1] || null;
 
               return (
                 <div
                   key={lesson.id}
-                  className="bg-white rounded-lg shadow-sm p-6 sm:p-8 border border-gray-200"
+                  className="p-6 sm:p-10 border-b border-gray-200 last:border-b-0"
                 >
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
-                    Lesson {lesson.page_number}
-                  </h2>
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-xs font-black tracking-widest uppercase bg-black text-white px-2.5 py-1">
+                      Lesson {lesson.page_number}
+                    </span>
+                  </div>
 
                   <div className="lesson-content prose prose-lg max-w-none text-gray-800 leading-relaxed">
                     <ReactMarkdown
@@ -299,15 +297,15 @@ export default async function WorksheetPage({ params }) {
                   </div>
 
                   {lesson.keywords && (
-                    <p className="mt-6 text-sm text-gray-500 border-t pt-4">
-                      Keywords: <span className="font-medium text-gray-700">{lesson.keywords}</span>
+                    <p className="mt-8 text-xs text-gray-400 border-t border-gray-100 pt-4">
+                      Keywords: <span className="font-medium text-gray-500">{lesson.keywords}</span>
                     </p>
                   )}
 
                   {nextLessonInSubsection && (
                     <div className="mt-6 text-right">
-                      <span className="text-blue-600 font-semibold text-sm">
-                        Next: Lesson {nextLessonInSubsection.page_number}
+                      <span className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                        Next: Lesson {nextLessonInSubsection.page_number} ↓
                       </span>
                     </div>
                   )}
@@ -315,116 +313,109 @@ export default async function WorksheetPage({ params }) {
               );
             })}
             {lessonsError && (
-              <p className="text-red-600">Error loading lessons: {lessonsError.message}</p>
+              <p className="text-red-600 p-6">Error loading lessons: {lessonsError.message}</p>
             )}
           </section>
 
           {/* Practice Options */}
-          <section className="bg-white rounded-lg shadow-sm p-6 sm:p-8 mb-8 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">
-              Let's Practice
+          <section className="border border-black p-6 sm:p-10 mb-8">
+            <h3 className="text-2xl font-black text-black mb-1 tracking-tight">
+              Ready to Practice?
             </h3>
-            
-            {/* PDF Download */}
-            <Link
-              href={`/worksheets/free-worksheets/${slug}/${moduleSlug}/${subsectionSlug}/printable-pdf/1`}
-              className="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-center hover:bg-blue-700 transition-colors mb-6"
-            >
-              <Download className="w-5 h-5 inline mr-2" />
-              Practice Worksheet PDF
-            </Link>
+            <p className="text-sm text-gray-500 mb-8">Choose how you want to work through this material.</p>
 
-            {/* Divider with OR */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">or</span>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* PDF Download */}
+              <Link
+                href={`/worksheets/free-worksheets/${slug}/${moduleSlug}/${subsectionSlug}/printable-pdf/1`}
+                className="flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-black text-white font-bold text-sm tracking-wide hover:bg-gray-900 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Practice Worksheet PDF
+              </Link>
+
+              {/* Digital Practice */}
+              <Link
+                href={`/courses/${slug}/${moduleSlug}/${subsectionSlug}`}
+                className="flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-4 border-2 border-black text-black font-bold text-sm tracking-wide hover:bg-black hover:text-white transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                Digital Quiz Version
+              </Link>
             </div>
-
-            {/* Digital Practice */}
-            <Link
-              href={`/courses/${slug}/${moduleSlug}/${subsectionSlug}`}
-              className="flex items-center justify-center gap-3 w-full px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-            >
-              <BookOpen className="w-5 h-5" />
-              Digital Version
-            </Link>
-            <p className="text-center text-sm text-gray-500 mt-3">
-              Online Modular Quiz Version
-            </p>
           </section>
 
           {/* Navigation */}
-          <nav className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8 border border-gray-200">
-            <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <nav className="border border-gray-200 mb-8">
+            <div className="grid grid-cols-3 divide-x divide-gray-200">
               {/* Previous */}
-              <div className="flex-1">
+              <div className="p-4 sm:p-6">
                 {prevSubsection ? (
                   <Link
                     href={`/worksheets/free-worksheets/${slug}/${prevSubsection.sections.slug}/${prevSubsection.slug}`}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    className="flex items-start gap-2 group"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 mt-0.5 text-gray-400 group-hover:text-black transition-colors shrink-0" />
                     <div>
-                      <div className="text-xs text-gray-500">Previous</div>
-                      <div className="font-semibold">{prevSubsection.subsection_title}</div>
-                      <div className="text-xs text-gray-500">{prevSubsection.sections.section_title}</div>
+                      <div className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-1">Prev</div>
+                      <div className="text-sm font-bold text-black leading-snug group-hover:underline">
+                        {prevSubsection.subsection_title}
+                      </div>
                     </div>
                   </Link>
                 ) : (
-                  <div className="text-gray-400 text-sm">← No previous lesson</div>
+                  <span className="text-xs text-gray-300 font-medium">First lesson</span>
                 )}
               </div>
 
-              {/* Browse All Chapters */}
-              <div className="flex items-center justify-center">
+              {/* Browse All */}
+              <div className="p-4 sm:p-6 flex items-center justify-center">
                 <Link
                   href={`/worksheets/free-worksheets/${slug}`}
-                  className="text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="text-xs font-bold tracking-widest uppercase text-gray-500 hover:text-black transition-colors text-center"
                 >
-                  All Chapters
+                  All<br />Chapters
                 </Link>
               </div>
 
               {/* Next */}
-              <div className="flex-1 flex justify-end">
+              <div className="p-4 sm:p-6 flex justify-end">
                 {nextSubsection ? (
                   <Link
                     href={`/worksheets/free-worksheets/${slug}/${nextSubsection.sections.slug}/${nextSubsection.slug}`}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm text-right"
+                    className="flex items-start gap-2 group text-right"
                   >
                     <div>
-                      <div className="text-xs text-gray-500">Next</div>
-                      <div className="font-semibold">{nextSubsection.subsection_title}</div>
-                      <div className="text-xs text-gray-500">{nextSubsection.sections.section_title}</div>
+                      <div className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-1">Next</div>
+                      <div className="text-sm font-bold text-black leading-snug group-hover:underline">
+                        {nextSubsection.subsection_title}
+                      </div>
                     </div>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 mt-0.5 text-gray-400 group-hover:text-black transition-colors shrink-0" />
                   </Link>
                 ) : (
-                  <div className="text-gray-400 text-sm">No next lesson →</div>
+                  <span className="text-xs text-gray-300 font-medium">Last lesson</span>
                 )}
               </div>
             </div>
           </nav>
 
           {/* Related Worksheets */}
-          <section className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">
+          <section className="pt-4 pb-12">
+            <h2 className="text-lg font-black text-black mb-1 tracking-tight">
               More {courseTitle} Worksheets
             </h2>
-            <p className="text-gray-600 mb-4">
-              Browse our complete collection of {courseTitle} worksheets covering all topics.
+            <p className="text-sm text-gray-500 mb-4">
+              Browse every topic in the full collection.
             </p>
             <Link
               href={`/worksheets/free-worksheets/${slug}`}
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+              className="inline-flex items-center gap-2 text-sm font-bold text-black hover:underline"
             >
-              View All {courseTitle} Worksheets →
+              View All {courseTitle} Worksheets <ArrowRight className="w-4 h-4" />
             </Link>
           </section>
+
         </div>
       </div>
     </>

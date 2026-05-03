@@ -3,7 +3,23 @@
 import { useEffect, useRef } from 'react'
 import 'katex/dist/katex.min.css'
 import renderMathInElement from 'katex/contrib/auto-render'
-import { preprocessForKaTeX } from '@/lib/utils/katexUtils'
+
+// Minimal preprocessing: normalize delimiters, strip HTML/markdown artifacts.
+// Deliberately does NOT wrap bare LaTeX commands in $...$  since content from
+// the AI route already arrives with proper $...$ / $$...$$ delimiters and
+// double-wrapping breaks KaTeX rendering.
+function preprocessContent(text) {
+  if (!text) return ''
+  return text
+    .replace(/<[^>]*>/g, '')           // strip HTML tags
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // strip bold markers
+    .replace(/\\\(/g, '$')             // \( → $
+    .replace(/\\\)/g, '$')             // \) → $
+    .replace(/\\\[/g, '$$')            // \[ → $$
+    .replace(/\\\]/g, '$$')            // \] → $$
+    .replace(/\\\$/g, '\\textdollar ') // escape literal \$
+    .trim()
+}
 
 export default function KaTeXRenderer({ content }) {
   const ref = useRef(null)
@@ -11,26 +27,18 @@ export default function KaTeXRenderer({ content }) {
   useEffect(() => {
     if (ref.current && content) {
       try {
-        // Preprocess text (strip HTML, apply subscripts, remove \( \) and \text{})
-        const cleanContent = preprocessForKaTeX(content)
-        
-        // Set the text content
-        ref.current.textContent = cleanContent
-        
-        // Auto-render math using KaTeX delimiters
+        ref.current.textContent = preprocessContent(content)
         renderMathInElement(ref.current, {
           delimiters: [
             { left: '$$', right: '$$', display: true },
             { left: '$', right: '$', display: false },
           ],
-          throwOnError: false
+          throwOnError: false,
         })
-        
-        // After KaTeX renders, replace the placeholder with actual $
         ref.current.innerHTML = ref.current.innerHTML.replace(/\\textdollar\s*/g, '$')
       } catch (err) {
         console.error('KaTeX render error:', err)
-        ref.current.textContent = content // fallback
+        ref.current.textContent = content
       }
     }
   }, [content])
