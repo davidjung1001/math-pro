@@ -23,6 +23,8 @@ export default function AdminDashboard() {
     visitorDetails,
     popularPages,
     trafficSources,
+    deviceStats,
+    utmStats,
     refreshData
   } = useAnalyticsData(timeRange, excludeMyself)
 
@@ -38,7 +40,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Quick Navigation Links */}
-        <div className="mb-6 flex gap-3">
+        <div className="mb-6 flex flex-wrap gap-3">
           <Link
             href="/admin"
             className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -70,7 +72,7 @@ export default function AdminDashboard() {
         <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === 'overview' && (
-          <OverviewTab stats={stats} trafficSources={trafficSources} />
+          <OverviewTab stats={stats} trafficSources={trafficSources} deviceStats={deviceStats} utmStats={utmStats} />
         )}
 
         {activeTab === 'pages' && (

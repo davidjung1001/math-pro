@@ -82,7 +82,8 @@ export default function ReturningVisitorsAnalytics() {
         }
       });
 
-      const visitorList = Object.values(visitorMap);
+      // Filter out 0 page-view entries (likely bots/crawlers)
+      const visitorList = Object.values(visitorMap).filter(v => v.pageViews > 0);
 
       // Calculate stats
       const totalVisitors = visitorList.length;
@@ -292,9 +293,9 @@ export default function ReturningVisitorsAnalytics() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Sessions</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Page Views</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Device</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Referrer</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">First Seen</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Device</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Referrer</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden lg:table-cell">First Seen</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Last Seen</th>
                 </tr>
               </thead>
@@ -387,14 +388,14 @@ export default function ReturningVisitorsAnalytics() {
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                         {visitor.pageViews}
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm hidden md:table-cell">
                         <div className="text-gray-900">{visitor.device_type}</div>
                         <div className="text-xs text-gray-500">{visitor.browser}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
                         {cleanReferrer(visitor.referrer)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-gray-600 hidden lg:table-cell">
                         {new Date(visitor.firstSeen).toLocaleDateString()}
                         <div className="text-xs text-gray-400">
                           {new Date(visitor.firstSeen).toLocaleTimeString()}

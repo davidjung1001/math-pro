@@ -361,13 +361,13 @@ export default function WorksheetActionsAnalytics() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Action</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Worksheet</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Course</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Visitor ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden sm:table-cell">Course</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden lg:table-cell">Visitor ID</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Device</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Referrer</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Options</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Device</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden md:table-cell">Referrer</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden sm:table-cell">Options</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase hidden sm:table-cell">Time</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
                 </tr>
               </thead>
@@ -392,8 +392,8 @@ export default function WorksheetActionsAnalytics() {
                       <div className="font-medium text-gray-900">{action.subsection_name}</div>
                       <div className="text-xs text-gray-500">{action.section_name}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{action.course_name}</td>
-                    <td className="px-6 py-4 text-xs font-mono text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden sm:table-cell">{action.course_name}</td>
+                    <td className="px-6 py-4 text-xs font-mono text-gray-600 hidden lg:table-cell">
                       {action.visitor_id?.substring(0, 20)}...
                     </td>
                     <td className="px-6 py-4 text-sm">
@@ -403,18 +403,18 @@ export default function WorksheetActionsAnalytics() {
                         <span className="text-gray-400 italic">Guest</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm hidden md:table-cell">
                       <div className="text-gray-900">{action.device_type}</div>
                       <div className="text-xs text-gray-500">{action.browser}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
                       {cleanReferrer(action.referrer)}
                     </td>
-                    <td className="px-6 py-4 text-xs text-gray-600">
+                    <td className="px-6 py-4 text-xs text-gray-600 hidden sm:table-cell">
                       {action.include_choices && <div>✓ With choices</div>}
                       {action.include_answers && <div>✓ With answers</div>}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">
                       {action.time_to_action_seconds}s
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

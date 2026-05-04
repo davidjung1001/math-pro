@@ -126,6 +126,51 @@ export async function fetchTrafficSources(supabase, startDate, excludeVisitorId)
 }
 
 // ---------------------------------------------------------------------------
+// 6. fetchDeviceStats
+// ---------------------------------------------------------------------------
+export async function fetchDeviceStats(supabase, startDate, excludeVisitorId) {
+  let query = supabase
+    .from('user_sessions')
+    .select('device_type')
+    .gte('created_at', startDate)
+  if (excludeVisitorId) query = query.neq('visitor_id', excludeVisitorId)
+  const { data, error } = await query
+  if (error) { console.error('fetchDeviceStats error:', error); return [] }
+  const counts = {}
+  data?.forEach(s => {
+    const type = s.device_type || 'Unknown'
+    counts[type] = (counts[type] || 0) + 1
+  })
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+// ---------------------------------------------------------------------------
+// 7. fetchUTMStats
+// ---------------------------------------------------------------------------
+export async function fetchUTMStats(supabase, startDate, excludeVisitorId) {
+  let query = supabase
+    .from('user_sessions')
+    .select('utm_source, utm_medium, utm_campaign')
+    .gte('created_at', startDate)
+    .not('utm_source', 'is', null)
+  if (excludeVisitorId) query = query.neq('visitor_id', excludeVisitorId)
+  const { data, error } = await query
+  if (error) { console.error('fetchUTMStats error:', error); return { sources: [], campaigns: [] } }
+  const sourceCounts = {}
+  const campaignCounts = {}
+  data?.forEach(s => {
+    if (s.utm_source) sourceCounts[s.utm_source] = (sourceCounts[s.utm_source] || 0) + 1
+    if (s.utm_campaign) campaignCounts[s.utm_campaign] = (campaignCounts[s.utm_campaign] || 0) + 1
+  })
+  return {
+    sources: Object.entries(sourceCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+    campaigns: Object.entries(campaignCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+  }
+}
+
+// ---------------------------------------------------------------------------
 // EXPORT ALL
 // ---------------------------------------------------------------------------
 

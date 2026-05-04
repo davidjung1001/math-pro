@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Loader2 } from 'lucide-react'
 
 export default function LoginPageClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,10 +39,13 @@ export default function LoginPageClient() {
 
   const handleGoogleLogin = async () => {
     try {
+      // Save return destination so callback can redirect back
+      const returnTo = searchParams.get('returnTo') || document.referrer || '/'
+      sessionStorage.setItem('pendingDownloadPage', returnTo)
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin // redirect to current site after login
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       })
     } catch (err) {

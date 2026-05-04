@@ -5,7 +5,9 @@ import {
   fetchVisitorDetails, 
   fetchVisitorJourneys, 
   fetchPopularPages, 
-  fetchTrafficSources 
+  fetchTrafficSources,
+  fetchDeviceStats,
+  fetchUTMStats
 } from '@/lib/utils/analyticsQueries'
 
 export function useAnalyticsData(timeRange = 7, excludeMyself = true) {
@@ -16,6 +18,8 @@ export function useAnalyticsData(timeRange = 7, excludeMyself = true) {
   const [visitorJourneys, setVisitorJourneys] = useState([])
   const [popularPages, setPopularPages] = useState([])
   const [trafficSources, setTrafficSources] = useState([])
+  const [deviceStats, setDeviceStats] = useState([])
+  const [utmStats, setUtmStats] = useState({ sources: [], campaigns: [] })
 
   useEffect(() => {
     const id = localStorage.getItem('visitor_id')
@@ -39,13 +43,17 @@ export function useAnalyticsData(timeRange = 7, excludeMyself = true) {
         visitorDetailsData,
         journeysData,
         popularPagesData,
-        trafficSourcesData
+        trafficSourcesData,
+        deviceStatsData,
+        utmStatsData
       ] = await Promise.all([
         fetchStats(supabase, startDate, excludeId),
         fetchVisitorDetails(supabase, startDate, excludeId),
         fetchVisitorJourneys(supabase, startDate, excludeId),
         fetchPopularPages(supabase, startDate, excludeId),
-        fetchTrafficSources(supabase, startDate, excludeId)
+        fetchTrafficSources(supabase, startDate, excludeId),
+        fetchDeviceStats(supabase, startDate, excludeId),
+        fetchUTMStats(supabase, startDate, excludeId)
       ])
 
       setStats(statsData)
@@ -53,6 +61,8 @@ export function useAnalyticsData(timeRange = 7, excludeMyself = true) {
       setVisitorJourneys(journeysData)
       setPopularPages(popularPagesData)
       setTrafficSources(trafficSourcesData)
+      setDeviceStats(deviceStatsData)
+      setUtmStats(utmStatsData)
     } catch (err) {
       console.error('Error loading analytics data', err)
     } finally {
@@ -72,6 +82,8 @@ export function useAnalyticsData(timeRange = 7, excludeMyself = true) {
     visitorJourneys,
     popularPages,
     trafficSources,
+    deviceStats,
+    utmStats,
     refreshData: loadAllData
   }
 }

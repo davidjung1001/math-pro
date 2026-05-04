@@ -60,8 +60,9 @@ export default function SimpleVisitorAnalytics() {
         }
       });
 
-      // Convert to array and sort by most recent
+      // Convert to array, filter out 0 page-view entries (likely bots), and sort by most recent
       const visitorList = Object.values(visitorMap)
+        .filter(v => v.allPageViews.length > 0)
         .sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
 
       setVisitors(visitorList);
@@ -102,7 +103,7 @@ export default function SimpleVisitorAnalytics() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Simple Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             Visitors ({visitors.length})
           </h1>

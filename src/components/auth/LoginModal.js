@@ -50,6 +50,8 @@ export default function LoginModal({ onClose, onLoginSuccess }) {
 
   const handleGoogleLogin = async () => {
     try {
+      // Save current page so callback can return user here
+      sessionStorage.setItem('pendingDownloadPage', window.location.href)
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
