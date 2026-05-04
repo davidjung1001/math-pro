@@ -35,15 +35,15 @@ export default function DashboardHeader({
             </label>
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={(e) => setTimeRange(Number(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
             >
-              <option value="24h">Last 24 hours</option>
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="1y">Last year</option>
-              <option value="all">All time</option>
+              <option value={1}>Last 24 hours</option>
+              <option value={7}>Last 7 days</option>
+              <option value={30}>Last 30 days</option>
+              <option value={90}>Last 90 days</option>
+              <option value={365}>Last year</option>
+              <option value={3650}>All time</option>
             </select>
           </div>
 
