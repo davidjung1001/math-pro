@@ -24,11 +24,20 @@ export default function AdminQuestionsEditor() {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [selectedSubsection, setSelectedSubsection] = useState('');
     const [limit, setLimit] = useState(25);
-    const [showOnlyUnreviewed, setShowOnlyUnreviewed] = useState(false);
+    const [showOnlyUnreviewed, setShowOnlyUnreviewed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('adminShowUnreviewed') === 'true';
+        }
+        return false;
+    });
     const [totalQuestions, setTotalQuestions] = useState(0);
+    const [selectedIds, setSelectedIds] = useState(new Set());
 
     useEffect(() => { loadFilterOptions(); }, [selectedCourse]);
     useEffect(() => { fetchQuestions(); }, [selectedCourse, selectedSubsection, limit, showOnlyUnreviewed]);
+    useEffect(() => {
+        localStorage.setItem('adminShowUnreviewed', showOnlyUnreviewed);
+    }, [showOnlyUnreviewed]);
 
     const loadFilterOptions = async () => {
         try {
@@ -120,6 +129,7 @@ export default function AdminQuestionsEditor() {
 
             setQuestions(data || []);
             setTotalQuestions(count || 0);
+            setSelectedIds(new Set()); // clear selection on reload
         } catch (err) { setMessage(`Error: ${err.message}`); }
         finally { setLoading(false); }
     };
@@ -130,6 +140,22 @@ export default function AdminQuestionsEditor() {
             setMessage('✓ Status updated'); loadFilterOptions(); fetchQuestions();
             setTimeout(() => setMessage(''), 2000);
         } catch (err) { setMessage(`Error: ${err.message}`); }
+    };
+
+    const bulkMarkReviewed = async (markAs) => {
+        if (selectedIds.size === 0) return;
+        const ids = Array.from(selectedIds);
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('questions')
+                .update({ reviewed: markAs })
+                .in('id', ids);
+            if (error) throw error;
+            setMessage(`✓ Marked ${ids.length} question${ids.length > 1 ? 's' : ''} as ${markAs ? 'reviewed' : 'unreviewed'}`);
+            loadFilterOptions(); fetchQuestions();
+            setTimeout(() => setMessage(''), 3000);
+        } catch (err) { setMessage(`Error: ${err.message}`); setLoading(false); }
     };
 
     const markSubsectionReviewed = async () => {
@@ -261,6 +287,9 @@ export default function AdminQuestionsEditor() {
                     saveQuestion={saveQuestion}
                     deleteQuestion={deleteQuestion}
                     toggleReviewed={toggleReviewed}
+                    selectedIds={selectedIds}
+                    setSelectedIds={setSelectedIds}
+                    bulkMarkReviewed={bulkMarkReviewed}
                 />
             </div>
 

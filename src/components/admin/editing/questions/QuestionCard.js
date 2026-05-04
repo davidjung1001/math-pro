@@ -2,15 +2,25 @@ import React from 'react';
 import { Edit2, Trash2, CheckCircle, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import { MarkdownKaTeX } from './MarkdownKaTeX';
 
-export function QuestionCard({ question, isExpanded, isEditing, onToggleExpand, onEdit, onDelete, onToggleReviewed }) {
+export function QuestionCard({ question, isExpanded, isEditing, isSelected, onToggleSelect, onToggleExpand, onEdit, onDelete, onToggleReviewed }) {
     const isReviewed = question.reviewed === true;
 
     return (
         <div className={`bg-white rounded-lg shadow-md overflow-hidden border-l-4 ${
             isReviewed ? 'border-green-500' : 'border-gray-300'
-        }`}>
+        } ${isSelected ? 'ring-2 ring-blue-400' : ''}`}>
             {/* Header */}
             <div className="p-4 flex items-start justify-between gap-3">
+                {/* Checkbox */}
+                <div className="flex-shrink-0 pt-0.5">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={onToggleSelect}
+                        onClick={e => e.stopPropagation()}
+                        className="w-4 h-4 rounded text-blue-600 border-gray-300 cursor-pointer"
+                    />
+                </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold text-gray-500">ID: {question.id}</span>

@@ -169,7 +169,24 @@ export default function SidebarNavigation() {
         </div>
 
         {/* Desktop CTA Buttons */}
-        {!collapsed && (
+        {collapsed ? (
+          <div className="p-2 border-t border-gray-200 bg-gray-50 flex flex-col items-center gap-2">
+            <Link
+              href="/ai-tools"
+              className="flex items-center justify-center w-full p-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 transition-all"
+              title="AI Generator"
+            >
+              <Zap size={18} />
+            </Link>
+            <Link
+              href="/diagnostic-test"
+              className="flex items-center justify-center w-full p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all"
+              title="Free Assessment"
+            >
+              <Laptop size={18} />
+            </Link>
+          </div>
+        ) : (
           <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-2">
             {/* AI Generator Button */}
             <Link
@@ -227,6 +244,15 @@ function SidebarContent({
 
         return (
           <div key={course.id} className="mb-3">
+            {collapsed ? (
+              <Link
+                href={`/worksheets/free-worksheets/${course.slug}`}
+                className="flex items-center justify-center w-full px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 ease-in-out text-gray-700 hover:text-gray-900"
+                title={course.title}
+              >
+                {getCourseIcon(course.title)}
+              </Link>
+            ) : (
             <button
               onClick={() => setOpenCourse(isCourseOpen ? null : course.id)}
               className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 ease-in-out text-gray-700 hover:text-gray-900"
@@ -240,6 +266,7 @@ function SidebarContent({
                 <ChevronRight size={16} className={`transition-transform ${isCourseOpen ? 'rotate-90' : ''}`} />
               )}
             </button>
+            )}
 
             {isCourseOpen && !collapsed && (
               <div className="ml-3 mt-2 space-y-2 border-l-2 border-gray-300 pl-3">
