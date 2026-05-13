@@ -220,6 +220,7 @@ export default function AdminQuestionsEditor() {
                     option_c: editingQuestion.option_c,
                     option_d: editingQuestion.option_d,
                     correct_option: editingQuestion.correct_option,
+                    grade_levels: editingQuestion.grade_levels || [],
                 })
                 .eq('id', editingQuestion.id);
 

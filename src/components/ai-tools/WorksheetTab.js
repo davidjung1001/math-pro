@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AIWorksheetPreviewModal from "@/components/worksheets/AIWorksheetPreviewModal"
 import { AlertCircle, Sparkles } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { getHybridTracking } from "@/lib/tracking/sessionStrategies"
 
 export default function WorksheetTab() {
+  const [user, setUser] = useState(null)
   const [topic, setTopic] = useState("")
   const [numQuestions, setNumQuestions] = useState(5)
   const [difficulty, setDifficulty] = useState("Medium")
@@ -18,6 +19,18 @@ export default function WorksheetTab() {
   const [previewData, setPreviewData] = useState(null)
   const [includeAnswers, setIncludeAnswers] = useState(false)
   const [includeChoices, setIncludeChoices] = useState(true)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+    }
+    getUser()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Example prompts for inspiration
   const examplePrompts = [
@@ -33,13 +46,9 @@ export default function WorksheetTab() {
       return
     }
     
-    if (numQuestions < 1 || numQuestions > 20) {
-      setError("Number of questions must be between 1 and 20")
-      return
-    }
-
-    if (numQuestions > 10) {
-      setError("Please log in to generate more than 10 questions")
+    const maxQuestions = user ? 20 : 10
+    if (numQuestions < 1 || numQuestions > maxQuestions) {
+      setError(`Number of questions must be between 1 and ${maxQuestions}${!user ? '. Log in to generate up to 20.' : '.'}`)
       return
     }
 
@@ -104,7 +113,8 @@ export default function WorksheetTab() {
     }
   }
 
-  const canGenerate = topic.trim() && numQuestions >= 1 && numQuestions <= 10
+  const maxAllowed = user ? 20 : 10
+  const canGenerate = topic.trim() && numQuestions >= 1 && numQuestions <= maxAllowed
 
   return (
     <div className="w-full py-10 px-4 sm:px-6 lg:px-8">
@@ -145,12 +155,12 @@ export default function WorksheetTab() {
               <input
                 type="number"
                 min="1"
-                max="20"
+                max={maxAllowed}
                 value={numQuestions}
                 onChange={(e) => setNumQuestions(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 bg-white text-black focus:outline-none focus:border-black transition-colors text-sm"
               />
-              {numQuestions > 10 && (
+              {!user && numQuestions > 10 && (
                 <p className="mt-2 text-xs text-amber-700 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> Log in for 10+ questions
                 </p>

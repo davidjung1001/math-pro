@@ -49,27 +49,35 @@ export default function ClientHeroExtras() {
           </span>
         </motion.div>
 
-        {/* SAT Destroyer Course Card */}
+        {/* Self-Guided Course Card */}
         <Link href="/courses" passHref>
           <motion.div
             whileHover={{ scale: 1.03, y: -2 }}
-            className="group cursor-pointer p-6 rounded-2xl border-2 border-red-200 hover:border-red-400 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden bg-gradient-to-br from-red-50 to-red-100 h-[480px] flex flex-col justify-between"
+            className="group cursor-pointer p-6 rounded-2xl border-2 border-indigo-200 hover:border-indigo-400 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 h-[480px] flex flex-col justify-between"
           >
-            <div className="absolute top-3 right-3 bg-white text-red-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm z-10 flex items-center gap-1">
+            <div className="absolute top-3 right-3 bg-white text-indigo-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm z-10 flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
-              Popular
+              New
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">🔥 SAT Destroyer</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Self-Guided Courses</h3>
             <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-              Our most popular course for crushing the SAT with shortcuts and strategies
+              Full semester courses for CBE and homeschool learners — written notes, weekly problem sets, and printable worksheets.
             </p>
 
-            <div className="bg-white rounded-xl flex items-center justify-center h-40 shadow-md text-red-500 font-extrabold text-lg">
-              SAT Destroyer Preview
+            <div className="bg-white rounded-xl p-5 shadow-md flex flex-col gap-2.5">
+              {['Algebra I', 'Geometry', 'Algebra II'].map((title, i) => (
+                <div key={title} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-mono text-indigo-400 w-4">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-sm font-medium text-gray-800">{title}</span>
+                  </div>
+                  <span className="text-xs text-gray-400">10 weeks</span>
+                </div>
+              ))}
             </div>
 
-            <span className="font-semibold text-sm text-red-600 group-hover:text-red-700 inline-flex items-center gap-1 mt-4">
-              Explore Course →
+            <span className="font-semibold text-sm text-indigo-600 group-hover:text-indigo-700 inline-flex items-center gap-1 mt-4">
+              Browse Courses →
             </span>
           </motion.div>
         </Link>

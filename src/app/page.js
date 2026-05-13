@@ -22,6 +22,7 @@ import ConsultationSection from '@/components/ConsultationSection';
 import ServerRenderedHero from '@/components/hero-components/ServerRenderedHero';
 import ServerHowItWorks from '@/components/how-it-works/ServerHowItWorks';
 import TestimonialCarousel from '@/components/TestimonialCarousel';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -30,7 +31,29 @@ export default function HomePage() {
       <div className="px-4 max-w-full overflow-x-hidden">
         <ServerHowItWorks />
       </div>
-      
+
+      {/* Summer 2026 callout */}
+      <div className="bg-zinc-950">
+        <div className="max-w-5xl mx-auto px-6 py-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
+          <div>
+            <p className="text-zinc-600 text-xs font-mono uppercase tracking-widest mb-3">Summer 2026</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
+              Self-Guided Math Courses<br className="hidden sm:block" /> for CBE &amp; Homeschool
+            </h2>
+            <p className="text-zinc-500 text-sm leading-relaxed max-w-lg">
+              Full semester courses in Algebra I, Geometry, and Algebra II — week-by-week guides,
+              written lesson notes, problem sets, and printable worksheets.
+            </p>
+          </div>
+          <Link
+            href="/courses"
+            className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-zinc-900 font-semibold px-6 py-3 rounded-lg hover:bg-zinc-100 transition text-sm whitespace-nowrap"
+          >
+            View Courses →
+          </Link>
+        </div>
+      </div>
+
       <div className="px-4 max-w-full overflow-x-hidden">
         <TestimonialCarousel />
       </div>

@@ -56,17 +56,13 @@ export default function UserHeader() {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await supabase.auth.signOut();
-    router.refresh(); 
-    window.location.href = '/'; 
+    router.refresh();
   };
 
   const handleLoginSuccess = (userData) => {
     setShowLoginModal(false);
     setUser(userData);
-    
-    console.log('Login Success in Header. Refreshing server state and navigating...');
     router.refresh();
-    router.push('/');
   };
 
   const firstName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User';

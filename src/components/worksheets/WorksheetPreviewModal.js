@@ -105,10 +105,10 @@ export default function WorksheetPreviewModal({
     console.log('Print button clicked. Checking login status...');
     console.log('isPremium:', isPremium, ' User:', user);
 
-    if (isPremium && !user) {
-    setShowLoginModal(true)
-    return
-  }
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
 
     if (!printableRef.current) return
     printableRef.current.style.display = 'block' // show printable area

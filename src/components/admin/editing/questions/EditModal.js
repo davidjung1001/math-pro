@@ -1,5 +1,37 @@
 import React from 'react';
 
+const GRADE_LEVELS = [
+  'K - Kindergarten',
+  '1 - 1st Grade',
+  '2 - 2nd Grade',
+  '3 - 3rd Grade',
+  '4 - 4th Grade',
+  '5 - 5th Grade',
+  '6 - 6th Grade',
+  '7 - 7th Grade',
+  '8 - Pre-Algebra',
+  '9 - Algebra 1',
+  '10 - Geometry',
+  '10 - Algebra 2',
+  '11 - Algebra 2',
+  '11 - Pre-Calculus',
+  '12 - Pre-Calculus',
+  '12 - AP Calculus AB',
+  '12 - AP Calculus BC',
+  '12 - AP Statistics',
+  'College - Calculus',
+  'College - Statistics',
+  'College - Linear Algebra',
+];
+
+const toggleGradeLevel = (editingQuestion, setEditingQuestion, level) => {
+  const current = editingQuestion.grade_levels || [];
+  const updated = current.includes(level)
+    ? current.filter(l => l !== level)
+    : [...current, level];
+  setEditingQuestion({ ...editingQuestion, grade_levels: updated });
+};
+
 export const EditModal = ({ editingQuestion, setEditingQuestion, saveQuestion }) => {
 
     const options = ['a', 'b', 'c', 'd'];
@@ -92,6 +124,35 @@ export const EditModal = ({ editingQuestion, setEditingQuestion, saveQuestion })
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Grade Levels */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Grade Levels
+                            <span className="ml-2 text-xs text-gray-400 font-normal">
+                                ({(editingQuestion.grade_levels || []).length} selected)
+                            </span>
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {GRADE_LEVELS.map(level => {
+                                const selected = (editingQuestion.grade_levels || []).includes(level);
+                                return (
+                                    <button
+                                        key={level}
+                                        type="button"
+                                        onClick={() => toggleGradeLevel(editingQuestion, setEditingQuestion, level)}
+                                        className={`text-left px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                                            selected
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
+                                        }`}
+                                    >
+                                        {level}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 

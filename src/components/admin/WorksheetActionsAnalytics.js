@@ -189,8 +189,8 @@ export default function WorksheetActionsAnalytics() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Worksheet Actions</h1>

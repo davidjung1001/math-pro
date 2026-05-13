@@ -65,6 +65,12 @@ export default function AdminDashboard() {
           >
             Worksheet Analytics
           </Link>
+          <Link
+            href="/admin/question-generator"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+          >
+            AI Question Generator
+          </Link>
         </div>
 
         <DashboardHeader

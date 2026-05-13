@@ -18,6 +18,7 @@ export default function Footer() {
           <a href="/contact" className="hover:text-emerald-400 transition" aria-label="Contact StillwaterMathPro">
             Contact
           </a>
+
         </nav>
 
       </div>

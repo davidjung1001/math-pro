@@ -29,7 +29,8 @@ export default function LoginPageClient() {
         return
       }
 
-      
+      const returnTo = searchParams.get('returnTo') || '/'
+      router.push(returnTo)
     } catch (err) {
       setMessage('An unexpected error occurred.')
     } finally {
